@@ -1,5 +1,5 @@
 import unittest
-import helpers.helpers as helpers
+import helpers
 """Unit tests for helper code"""
 
 class TestHelpers(unittest.TestCase):
