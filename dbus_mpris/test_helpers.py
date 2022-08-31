@@ -1,5 +1,5 @@
 import unittest
-import dbus_mpris.helpers as helpers
+import helpers as helpers
 """Unit tests for helper code"""
 
 class TestHelpers(unittest.TestCase):
