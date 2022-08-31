@@ -2,6 +2,7 @@
 import dbus
 from dbus import DBusException
 from typing import Any, List, Dict, Tuple
+from consolemenu import SelectionMenu
 import logging
 
 logger = logging.getLogger(__name__)
@@ -41,6 +42,46 @@ def get_player(player_name: str, fq_player_name: str) -> dbus.Interface:
             f"Unable to connect to {player_name}, check if {player_name} it is running."
         )
     player = dbus.Interface(proxy, dbus_interface="org.mpris.MediaPlayer2.Player")
+    return player
+
+
+def select_player_instance_name(player_names: List[str]) -> str:
+    """Presents the user with an interactive console to select a player
+    instance.
+    Arguments:
+    player_names -- a list containing the names of the player instances.
+    Returns a string containing the player name selected by the user"""
+
+    if not isinstance(player_names, list):
+        raise TypeError("player_names is not a list")
+
+    selection = SelectionMenu.get_selection(
+        title="Select a player to connect to:",
+        strings=player_names,
+        show_exit_option=False,
+    )
+    return player_names[selection]
+
+
+def get_selected_player():
+    """Returns a dbus object instance of the user selected player instance."""
+
+    player_instance_names = get_running_player_instance_names()
+    if len(player_instance_names) == 0:
+        logger.error("No mpris enabled players are running")
+        return None
+    # select a player to connect to
+    selected_player_name = ""
+    player_names = list(player_instance_names.keys())
+    if len(player_instance_names) == 1:
+        selected_player_name = player_names[0]
+    else:
+        selected_player_name = select_player_instance_name(
+            list(player_instance_names.keys())
+        )
+    player = get_player(
+        selected_player_name, player_instance_names[selected_player_name]
+    )
     return player
 
 

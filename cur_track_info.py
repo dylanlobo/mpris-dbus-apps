@@ -38,22 +38,10 @@ def get_cmd_line_args():
 if __name__ == "__main__":
     try:
         args = get_cmd_line_args()
-        player_instance_names = mpris_core.get_running_player_instance_names()
-        if len(player_instance_names) == 0:
+        player = mpris_core.get_selected_player()
+        if player is None:
             logger.error("No mpris enabled players are running")
             exit()
-        # select a player to connect to
-        selected_player_name = ""
-        player_names = list(player_instance_names.keys())
-        if len(player_instance_names) == 1:
-            selected_player_name = player_names[0]
-        else:
-            selected_player_name = helpers.select_player_instance_name(
-                list(player_instance_names.keys())
-            )
-        player = mpris_core.get_player(
-            selected_player_name, player_instance_names[selected_player_name]
-        )
         track_meta, track_pos, playback_status = mpris_core.get_cur_track_info(player)
         print_track_info(track_meta, track_pos, playback_status)
     except Exception as err:

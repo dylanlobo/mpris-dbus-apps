@@ -3,7 +3,6 @@ Helper functions for mpris-dbus-apps
 """
 
 import re
-from consolemenu import SelectionMenu
 from typing import List
 
 
@@ -56,21 +55,3 @@ def to_HHMMSS(microsecs: int) -> str:
     min_s = f"{minutes}" if minutes > 9 else f"0{minutes}"
     hr_s = f"{hours}" if hours > 9 else f"0{hours}"
     return f"{hr_s}:{min_s}:{sec_s}"
-
-
-def select_player_instance_name(player_names: List[str]) -> str:
-    """Presents the user with an interactive console to select a player
-    instance.
-    Arguments:
-    player_names -- a list containing the names of the player instances.
-    Returns a string containing the player name selected by the user"""
-
-    if not isinstance(player_names, list):
-        raise TypeError("player_names is not a list")
-
-    selection = SelectionMenu.get_selection(
-        title="Select a player to connect to:",
-        strings=player_names,
-        show_exit_option=False,
-    )
-    return player_names[selection]
