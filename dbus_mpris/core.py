@@ -68,7 +68,6 @@ def get_selected_player():
 
     player_instance_names = get_running_player_instance_names()
     if len(player_instance_names) == 0:
-        logger.error("No mpris enabled players are running")
         return None
     # select a player to connect to
     selected_player_name = ""
