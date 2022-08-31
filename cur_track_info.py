@@ -30,7 +30,7 @@ def select_player_instance_name(player_names: List[str]) -> str:
     instance.
 
     Arguments:
-    player_names is a list containing the names of the player instances.
+    player_names -- a list containing the names of the player instances.
 
     Returns a string containing the player name selected by the user"""
 
@@ -48,8 +48,8 @@ def select_player_instance_name(player_names: List[str]) -> str:
 def get_player(player_name: str, fq_player_name: str) -> dbus.Interface:
     """Returns a dbus object instance of the specified player instance.
     Arguments
-    player_name is a string containing the name a running player instance. Eg. rhythmbox
-    fq_player_name is a string containing the fully qualified name of a running player instance.
+    player_name -- a string containing the name a running player instance. Eg. rhythmbox
+    fq_player_name -- a string containing the fully qualified name of a running player instance.
     Eg. org.mpris.MediaPlayer2.rhythmbox
 
     Retrun a dbus.Interface("org.mpris.MediaPlayer2.Player") instance of the specified player instance name.
@@ -70,8 +70,9 @@ def get_player(player_name: str, fq_player_name: str) -> dbus.Interface:
 def get_cur_track_info(player: dbus.Interface) -> Tuple[str, str, str]:
     """Retrieves informtion about the currently selected track in the
     specifed player instance.
+
     Arguments
-    player is a dbus.Interface("org.mpris.MediaPlayer2.Player") instance of the selected player instance name.
+    player -- a dbus.Interface("org.mpris.MediaPlayer2.Player") instance of the selected player instance name.
 
     Return a tuple of strings containing the player's Metadata, Postion and PlaybackStatus
     """
