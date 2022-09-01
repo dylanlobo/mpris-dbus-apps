@@ -41,6 +41,7 @@ def get_cmd_line_args() -> Tuple[helpers.Direction, int]:
 
 if __name__ == "__main__":
     try:
+        direction, time_in_ms = get_cmd_line_args()
         player = mpris_core.get_selected_player()
         if player is None:
             logger.error("No mpris enabled players are running")
@@ -51,7 +52,6 @@ if __name__ == "__main__":
             exit()
         elif playback_status == "Playing":
             player.Pause()
-        direction, time_in_ms = get_cmd_line_args()
         player.Seek(time_in_ms * direction)
         player.Play()
 
