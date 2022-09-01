@@ -3,7 +3,7 @@ Helper functions for mpris-dbus-apps
 """
 
 import re
-from typing import List
+from enum import IntEnum
 
 
 def to_microsecs(time_str: str) -> int:
@@ -55,3 +55,8 @@ def to_HHMMSS(microsecs: int) -> str:
     min_s = f"{minutes}" if minutes > 9 else f"0{minutes}"
     hr_s = f"{hours}" if hours > 9 else f"0{hours}"
     return f"{hr_s}:{min_s}:{sec_s}"
+
+
+class Direction(IntEnum):
+    FORWARD = 1
+    REVERSE = -1
