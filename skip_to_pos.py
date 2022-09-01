@@ -2,12 +2,10 @@
 Skips from the current postion to the time offset, 
 specified by HH:MM:SS format, in the currently playing track.
 """
-from ast import arg
 from typing import Tuple
 import dbus_mpris.core as mpris_core
 import dbus_mpris.helpers as helpers
 import argparse
-from enum import IntEnum
 import logging
 
 logger = logging.getLogger(__name__)
