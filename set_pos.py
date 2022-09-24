@@ -2,8 +2,8 @@
 Sets the playback time position, in the currently playing track.
 """
 
-import dbus_mpris.core as mpris_core
-import dbus_mpris.helpers as helpers
+from dbus_mpris.core import Player
+import dbus_mpris.helpers as mpris_helpers
 import logging
 import argparse
 
@@ -26,18 +26,21 @@ def get_cmd_line_args() -> int:
     )
     arguments = parser.parse_args()
     time_str = arguments.time
-    return helpers.to_microsecs(time_str)
+    return mpris_helpers.to_microsecs(time_str)
 
 
 if __name__ == "__main__":
     try:
         micro_secs = get_cmd_line_args()
-        player = mpris_core.get_selected_player()
+        running_player_names = Player.get_running_player_names()
+        if not running_player_names:
+            print("No mpris enabled players are running")
+            exit()
+        player = mpris_helpers.get_selected_player(running_player_names)
         if player is None:
             logger.error("No mpris enabled players are running")
             exit()
-        track_meta, track_pos, playback_status = mpris_core.get_cur_track_info(player)
-        player.SetPosition(track_meta["mpris:trackid"], micro_secs)
+        player.SetPosition(micro_secs)
 
     except Exception as err:
         logger.error(err)

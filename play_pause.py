@@ -1,5 +1,6 @@
 """Toggles the play/pause state of the selected player instance"""
-import dbus_mpris.core as mpris_core
+import dbus_mpris.helpers as mpris_helpers
+from dbus_mpris.core import Player, NoValidMprisPlayers
 import argparse
 import logging
 
@@ -20,10 +21,11 @@ def get_cmd_line_args():
 
 if __name__ == "__main__":
     try:
-        player = mpris_core.get_selected_player()
-        if player is None:
-            logger.error("No mpris enabled players are running")
+        running_player_names = Player.get_running_player_names()
+        if not running_player_names:
+            print("No mpris enabled players are running")
             exit()
+        player = mpris_helpers.get_selected_player(running_player_names)
         player.PlayPause()
     except Exception as err:
         logging.error(err)

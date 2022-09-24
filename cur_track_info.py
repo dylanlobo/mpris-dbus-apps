@@ -1,5 +1,5 @@
-import dbus_mpris.core as mpris_core
-import dbus_mpris.helpers as helpers
+import dbus_mpris.helpers as mpris_helpers
+from dbus_mpris.core import Player, NoValidMprisPlayers
 from typing import Dict, Any
 import argparse
 import logging
@@ -12,10 +12,10 @@ def print_track_info(
 ):
     """Formats and prints track info to the console"""
     try:
-        player_pos_hhmmss = helpers.to_HHMMSS(player_pos)
+        player_pos_hhmmss = mpris_helpers.to_HHMMSS(player_pos)
         title = player_metadata["xesam:title"]
         length = int(player_metadata["mpris:length"])
-        length_s = helpers.to_HHMMSS(length)
+        length_s = mpris_helpers.to_HHMMSS(length)
         print(f"{title}")
         print(f"{player_pos_hhmmss} of {length_s}")
         print(playback_status)
@@ -36,13 +36,16 @@ def get_cmd_line_args():
 
 
 if __name__ == "__main__":
+    args = get_cmd_line_args()
     try:
-        args = get_cmd_line_args()
-        player = mpris_core.get_selected_player()
+        running_player_names = Player.get_running_player_names()
+        if not running_player_names:
+            print("No mpris enabled players are running")
+            exit()
+        player = mpris_helpers.get_selected_player(running_player_names)
         if player is None:
             logger.error("No mpris enabled players are running")
             exit()
-        track_meta, track_pos, playback_status = mpris_core.get_cur_track_info(player)
-        print_track_info(track_meta, track_pos, playback_status)
+        print_track_info(player.metadata, player.position, player.playback_status)
     except Exception as err:
         logger.error(err)

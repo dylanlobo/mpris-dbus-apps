@@ -3,15 +3,15 @@ Skips from the current postion to the time offset,
 specified by HH:MM:SS format, in the currently playing track.
 """
 from typing import Tuple
-import dbus_mpris.core as mpris_core
-import dbus_mpris.helpers as helpers
+from dbus_mpris.core import Player
+import dbus_mpris.helpers as mpris_helpers
 import argparse
 import logging
 
 logger = logging.getLogger(__name__)
 
 
-def get_cmd_line_args() -> Tuple[helpers.Direction, int]:
+def get_cmd_line_args() -> Tuple[mpris_helpers.Direction, int]:
     # Set up command line argument processing
     parser = argparse.ArgumentParser(
         description=(
@@ -32,28 +32,25 @@ def get_cmd_line_args() -> Tuple[helpers.Direction, int]:
         "time", action="store", help="Specfiy the time in HH:MM:SS format."
     )
     arguments = parser.parse_args()
-    direction = helpers.Direction.FORWARD
+    direction = mpris_helpers.Direction.FORWARD
     if arguments.r:
-        direction = helpers.Direction.REVERSE
-    time_in_ms = helpers.to_microsecs(arguments.time)
+        direction = mpris_helpers.Direction.REVERSE
+    time_in_ms = mpris_helpers.to_microsecs(arguments.time)
     return direction, time_in_ms
 
 
 if __name__ == "__main__":
     try:
         direction, time_in_ms = get_cmd_line_args()
-        player = mpris_core.get_selected_player()
+        running_player_names = Player.get_running_player_names()
+        if not running_player_names:
+            print("No mpris enabled players are running")
+            exit()
+        player = mpris_helpers.get_selected_player(running_player_names)
         if player is None:
             logger.error("No mpris enabled players are running")
             exit()
-        track_meta, track_pos, playback_status = mpris_core.get_cur_track_info(player)
-        if playback_status == "Stopped":
-            logger.error("The selected player is currently stopped")
-            exit()
-        elif playback_status == "Playing":
-            player.Pause()
         player.Seek(time_in_ms * direction)
-        player.Play()
 
     except Exception as err:
         logging.error(err)
