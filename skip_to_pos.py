@@ -50,7 +50,7 @@ if __name__ == "__main__":
         if player is None:
             logger.error("No mpris enabled players are running")
             exit()
-        player.Seek(time_in_ms * direction)
+        player.seek(time_in_ms * direction)
 
     except Exception as err:
         logging.error(err)

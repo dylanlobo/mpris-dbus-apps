@@ -4,12 +4,11 @@ Helper functions for mpris-dbus-apps
 
 import re
 import logging
-import dbus
 from .core import Player, NoValidMprisPlayers
 from enum import IntEnum
 from functools import lru_cache
 from consolemenu import SelectionMenu
-from typing import List, Dict, Tuple
+from typing import List, Dict
 
 
 logger = logging.getLogger(__name__)
@@ -40,18 +39,6 @@ def get_player(player_name: str, running_players: Dict[str, str]) -> Player:
     mpris_player_name = running_players[player_name]
     player = Player(mpris_player_name, player_name)
     return player
-
-
-def player_skip(player: Player, offset: str, direction=1) -> None:
-    if (not player.can_control) or (not player.can_seek):
-        logger.error("Player MPRIS interface available but cannot be controled")
-        return
-    player_status = player.Get("org.mpris.MediaPlayer2.Player", "PlaybackStatus")
-    if player_status == "Stopped":
-        logger.error(f"The player is currently stopped")
-        return
-    offset_microsecs = to_microsecs(offset)
-    player.Seek(offset_microsecs * direction)
 
 
 @lru_cache

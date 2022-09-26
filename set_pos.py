@@ -40,7 +40,7 @@ if __name__ == "__main__":
         if player is None:
             logger.error("No mpris enabled players are running")
             exit()
-        player.SetPosition(micro_secs)
+        player.set_position(micro_secs)
 
     except Exception as err:
         logger.error(err)
