@@ -69,12 +69,18 @@ class Player:
             raise Exception(
                 f"Unable to connect to {self._ext_name}, check if {self._ext_name} it is running."
             )
+        self._media_player2 = dbus.Interface(
+            self._proxy, dbus_interface="org.mpris.MediaPlayer2"
+        )
         self._player = dbus.Interface(
             self._proxy, dbus_interface="org.mpris.MediaPlayer2.Player"
         )
         self._player_properties = dbus.Interface(
             self._player, dbus_interface="org.freedesktop.DBus.Properties"
         )
+
+    def raise_window(self) -> None:
+        self.mpris_media_player2.Raise()
 
     def play(self) -> None:
         self.mpris_player.Play()
@@ -113,6 +119,10 @@ class Player:
     @property
     def mpris_player(self) -> dbus.Interface:
         return self._player
+
+    @property
+    def mpris_media_player2(self) -> dbus.Interface:
+        return self._media_player2
 
     @property
     def mpris_player_properties(self) -> dbus.Interface:
