@@ -1,0 +1,17 @@
+{
+	"title":"NoSQL Tutorial",
+	"chapters":{
+		"What is NoSQL" : "00:01:18",
+		"Why use NoSQL" : "00:04:33",
+		"SQL vs NoSQL" : "00:06:26",
+                "Setting Up":  "00:09:00",
+		"Tabular Type":  "00:13:44",
+		"Document Type":  "00:37:28",
+		"Key-value Type":  "00:59:22",
+		"Graph Type":  "01:11:48",
+		"Multi-model Type explained":  "01:22:22",
+		"Project 1":  "01:23:52",
+		"Project 2":  "02:19:36",
+		"Where to go next":  "02:53:51"
+	}
+}
