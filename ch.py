@@ -1,8 +1,6 @@
 import argparse
-from ctypes import c_char
 import json
 from json.decoder import JSONDecodeError
-from xmlrpc.client import Boolean
 from dbus_mpris.core import Player, NoValidMprisPlayers
 import dbus_mpris.helpers as mpris_helpers
 import os
@@ -10,7 +8,7 @@ import logging
 from consolemenu import ConsoleMenu
 from consolemenu.items import FunctionItem
 from consolemenu.items import SubmenuItem
-from typing import Dict, Tuple, List
+from typing import Dict, Tuple
 
 # logging.basicConfig(filename="log.txt", filemode="w", level=logging.DEBUG)
 logging.basicConfig(level=logging.INFO)
@@ -44,7 +42,6 @@ def main():
     except Exception as err:
         logger.error(err)
         return
-    # display_console(title, chapters, player)
 
 
 def get_arguments() -> argparse.Namespace:
@@ -81,7 +78,7 @@ class ChaptersMenuConsole:
         return self._console_main_menu
 
     @property
-    def reload_chapters_on_exit(self) -> Boolean:
+    def reload_chapters_on_exit(self) -> bool:
         return self._reload_chapters
 
     def display_menu(self):
