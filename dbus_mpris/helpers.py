@@ -4,7 +4,7 @@ Helper functions for mpris-dbus-apps
 
 import re
 import logging
-from .core import Player, NoValidMprisPlayers
+from .core import NoValidMprisPlayersError, Player
 from enum import IntEnum
 from functools import lru_cache
 from consolemenu import SelectionMenu
@@ -99,7 +99,7 @@ def get_selected_player(running_players: Dict[str, str]) -> Player:
     mpris enabled players.The key is the unqualified player instance name
     and value is the fully qualified player instance name.
     :returns: A valid Player instance on successful completion.
-    :raises: NoValidMprisPlayers exception if no valid MPRIS enable players
+    :raises: NoValidMprisPlayersError exception if no valid MPRIS enable players
     are available.
     """
     if not running_players:
@@ -120,13 +120,13 @@ def get_selected_player(running_players: Dict[str, str]) -> Player:
         if not player_names:
             msg = f"{selected_player_name} is not useable. No other mpris enabled players are currently running."
             logger.error(msg)
-            raise NoValidMprisPlayers(msg)
+            raise NoValidMprisPlayersError(msg)
 
         if user_try_another_player():
             selected_player_name = user_select_player(player_names)
             player = get_player(selected_player_name, running_players)
         else:
-            raise NoValidMprisPlayers
+            raise NoValidMprisPlayersError
     return player
 
 

@@ -169,5 +169,5 @@ class Player:
         return self.get("org.mpris.MediaPlayer2.Player", "CanPlay")
 
 
-class NoValidMprisPlayers(Exception):
+class NoValidMprisPlayersError(Exception):
     pass
