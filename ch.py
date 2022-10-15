@@ -1,7 +1,14 @@
+"""Creates a console based menu of chapters, from a default file named ch.json in
+the current directory. A the chapters file may also be specified with the -f 
+option. On startup, the application displays a list of running MPRIS enabled 
+players to connect to. If only one player is running then it directly connects
+to the running player.
+"""
+
 import argparse
 import json
 from json.decoder import JSONDecodeError
-from dbus_mpris.core import Player, NoValidMprisPlayers
+from dbus_mpris.core import NoValidMprisPlayersError, Player
 import dbus_mpris.helpers as mpris_helpers
 import os
 import logging
@@ -36,7 +43,7 @@ def main():
             else:
                 break
 
-    except NoValidMprisPlayers as err:
+    except NoValidMprisPlayersError as err:
         print(err)
         return
     except Exception as err:
