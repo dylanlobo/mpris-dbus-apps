@@ -135,7 +135,8 @@ def user_try_another_player() -> bool:
     selection is not valid and requesting the user to choose a different player"""
     while True:
         answer = input(
-            "The selected player does not implement required MPRIS functionality. \n Select another player? Yes[y] or No[n] default[y]: "
+            "The selected player does not implement required MPRIS functionality. \n Select another player? Yes[y] or "
+            "No[n] default[y]: "
         )
         answer = answer.lower()
         if answer in ("", "y", "yes"):
