@@ -37,8 +37,8 @@ def is_object_path_valid(path: str) -> bool:
 
 
 class Player:
-    """A convience class whose object instances encapsulates
-    an mpris player object and exposes a subset of
+    """A convenience class whose object instances encapsulates
+    an MPRIS player object and exposes a subset of
     the org.mpris.MediaPlayer2.Player interface."""
 
     @staticmethod
@@ -49,11 +49,11 @@ class Player:
         player instance name and value is the fully qualified player name."""
 
         running_players = {}
-        mediaPlayer_prefix = "org.mpris.MediaPlayer2"
-        mediaPlayer_prefix_len = len(mediaPlayer_prefix)
+        media_player_prefix = "org.mpris.MediaPlayer2"
+        media_player_prefix_len = len(media_player_prefix)
         for service in dbus.SessionBus().list_names():
-            if mediaPlayer_prefix in service:
-                service_suffix = service[mediaPlayer_prefix_len + 1 :]
+            if media_player_prefix in service:
+                service_suffix = service[media_player_prefix_len + 1:]
                 running_players[service_suffix] = str(service)
         return running_players
 
@@ -61,11 +61,11 @@ class Player:
         self._name = mpris_player_name
         self._ext_name = ext_player_name
         bus = dbus.SessionBus()
-        proxy = None
         try:
             self._proxy = bus.get_object(self._name, "/org/mpris/MediaPlayer2")
         except DBusException as e:
             logger.error(f"Unable to retrieve the {self._name} proxy from dbus.")
+            logger.error(e)
             raise Exception(
                 f"Unable to connect to {self._ext_name}, check if {self._ext_name} it is running."
             )
@@ -98,9 +98,8 @@ class Player:
         self.mpris_player.Seek(offset)
 
     def set_position(self, to_position: int) -> None:
-        id = self.trackid
-        if is_object_path_valid(id):
-            self.mpris_player.SetPosition(id, to_position)
+        if is_object_path_valid(self.trackid):
+            self.mpris_player.SetPosition(self.trackid, to_position)
         else:
             logger.warning(f"The trackid returned by {self.ext_name} is not valid.")
             logger.debug(
@@ -111,7 +110,7 @@ class Player:
             seek_to_position = to_position - cur_pos
             # self.Seek(to_microsecs("99:59:59") * -1)
             # self.Seek(to_position)
-            self.Seek(seek_to_position)
+            self.seek(seek_to_position)
 
     def get(self, interface_name: str, property_name: str) -> Any:
         return self.mpris_player_properties.Get(interface_name, property_name)

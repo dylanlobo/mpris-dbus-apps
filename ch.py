@@ -1,5 +1,5 @@
 """Creates a console based menu of chapters, from a default file named ch.json in
-the current directory. A the chapters file may also be specified with the -f 
+the current directory. A chapters file may also be specified with the -f
 option. On startup, the application displays a list of running MPRIS enabled 
 players to connect to. If only one player is running then it directly connects
 to the running player.
@@ -7,15 +7,17 @@ to the running player.
 
 import argparse
 import json
-from json.decoder import JSONDecodeError
-from dbus_mpris.core import NoValidMprisPlayersError, Player
-import dbus_mpris.helpers as mpris_helpers
-import os
 import logging
+import os
+from json.decoder import JSONDecodeError
+from typing import Dict, Tuple
+
 from consolemenu import ConsoleMenu
 from consolemenu.items import FunctionItem
 from consolemenu.items import SubmenuItem
-from typing import Dict, Tuple
+
+import dbus_mpris.helpers as mpris_helpers
+from dbus_mpris.core import NoValidMprisPlayersError, Player
 
 # logging.basicConfig(filename="log.txt", filemode="w", level=logging.DEBUG)
 logging.basicConfig(level=logging.INFO)
@@ -56,7 +58,7 @@ def get_arguments() -> argparse.Namespace:
         description=(
             "Creates a console based menu of chapters,"
             " from a default file named ch.json in the current directory. "
-            "A the chapters file may also be specified with the -f option. "
+            "A chapters file may also be specified with the -f option. "
             "On startup, the application displays a list of running MPRIS enabled players to connect to. "
             "If only one player is running then it directly connects to the running player."
         )
@@ -104,13 +106,13 @@ class ChaptersMenuConsoleBuilder:
         self._chapters_menu_console = ChaptersMenuConsole(title=self._chapters_title)
         self._player = player
 
-    def _load_chapters_file(self, chapters_file: str) -> Tuple[str, Dict[str, str]]:
+    @staticmethod
+    def _load_chapters_file(chapters_file: str) -> Tuple[str, Dict[str, str]]:
         if os.path.isfile(chapters_file) is False:
             logger.error(f"{chapters_file} does not exist")
-            raise FileNotFoundError(filename=chapters_file)
+            raise FileNotFoundError(f"{chapters_file} does not exist")
         chapters = {}
         title = "No Title"
-        json_dict = None
         try:
             with open(chapters_file, "r") as f:
                 json_dict = json.load(f)
@@ -126,7 +128,7 @@ class ChaptersMenuConsoleBuilder:
             chapters = json_dict["chapters"]
         else:
             raise ValueError(f'{chapters_file} file is missing "chapters" object')
-        return (title, chapters)
+        return title, chapters
 
     @property
     def chapters_menu_console(self) -> ChaptersMenuConsole:
