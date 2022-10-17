@@ -1,8 +1,9 @@
-import dbus_mpris.helpers as mpris_helpers
-from dbus_mpris.core import Player, NoValidMprisPlayers
-from typing import Dict, Any
 import argparse
 import logging
+from typing import Dict, Any
+
+import dbus_mpris.helpers as mpris_helpers
+from dbus_mpris.core import Player
 
 logger = logging.getLogger(__name__)
 
