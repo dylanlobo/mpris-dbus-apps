@@ -47,12 +47,13 @@ def main():
 
     except NoValidMprisPlayersError as err:
         print(err)
-        return
     except FileNotFoundError as fe:
-        print("Chapters file not found. Use -h option to learn how to provide a chapters file.")
+        print(
+            "Chapters file not found. Use -h option to learn how to provide a chapters file."
+        )
     except Exception as err:
         logger.error(err)
-        return
+    return
 
 
 def get_arguments() -> argparse.Namespace:
@@ -103,7 +104,9 @@ class ChaptersMenuConsole:
 class ChaptersMenuConsoleBuilder:
     def __init__(self, chapters_filename: str, player: Player) -> None:
         try:
-            self._chapters_title, self._chapters = self._load_chapters_file(chapters_filename)
+            self._chapters_title, self._chapters = self._load_chapters_file(
+                chapters_filename
+            )
         except FileNotFoundError as fe:
             logger.error(fe)
             raise fe
