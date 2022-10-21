@@ -94,7 +94,6 @@ class ChaptersMenuConsole:
         return self._reload_chapters
 
     def display_menu(self):
-        print("In display menu")
         self.console_main_menu.show()
 
     def set_reload_chapters_on_exit(self) -> None:
