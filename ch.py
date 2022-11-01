@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 def main():
     arguments = get_arguments()
+    player_instance_name = arguments.p
     # Retrieve list of running mpris enabled players
     running_players = Player.get_running_player_names()
     if len(running_players) == 0:
@@ -34,14 +35,30 @@ def main():
 
     try:
         logger.info("Creating player")
-        player = mpris_helpers.get_selected_player(running_players)
+        if player_instance_name:
+            logger.info(f"Player name specified via -p is {player_instance_name}")
+            selected_player = mpris_helpers.get_player(
+                player_instance_name, running_players
+            )
+        else:
+            selected_player = mpris_helpers.get_selected_player(running_players)
         logger.info("Created player")
         chapters_file = arguments.f
-        chapters_console_menu = build_console_menu(chapters_file, player)
+        chapters_console_menu = build_console_menu(
+            chapters_file=chapters_file,
+            player=selected_player,
+            reload_option=arguments.r,
+            player_controls_option=arguments.c,
+        )
         while True:
             chapters_console_menu.display_menu()
             if chapters_console_menu.reload_chapters_on_exit:
-                chapters_console_menu = build_console_menu(chapters_file, player)
+                chapters_console_menu = build_console_menu(
+                    chapters_file=chapters_file,
+                    player=selected_player,
+                    reload_option=arguments.r,
+                    player_controls_option=arguments.c,
+                )
             else:
                 break
 
@@ -74,6 +91,26 @@ def get_arguments() -> argparse.Namespace:
         help="The file name of the file containing the "
         "chapter titles and their time offsets in a JSON document: "
         '{"title":"title name", "chapters":{"first chapter name" : "hh:mm:ss","second chapter name" : "hh:mm:ss"}}',
+    )
+    parser.add_argument(
+        "-p",
+        action="store",
+        required=False,
+        help="The name of the player instance to connect to.",
+    )
+    parser.add_argument(
+        "-r",
+        action="store_true",
+        required=False,
+        default=False,
+        help="Include a option to reload the chapters file.",
+    )
+    parser.add_argument(
+        "-c",
+        action="store_true",
+        required=False,
+        default=False,
+        help="Include a option to control the player via a sub-menu",
     )
     arguments = parser.parse_args()
     return arguments
@@ -141,7 +178,7 @@ class ChaptersMenuConsoleBuilder:
     def chapters_menu_console(self) -> ChaptersMenuConsole:
         return self._chapters_menu_console
 
-    def build_default_setup(self) -> None:
+    def build_complete_setup(self) -> None:
         self.build_reload_chapters_item()
         self.build_player_control_menu()
         self.build_chapters_menu()
@@ -209,9 +246,18 @@ class ChaptersMenuConsoleBuilder:
         self.chapters_menu_console.console_main_menu.append_item(command_submenu_item)
 
 
-def build_console_menu(chapters_file: str, player: Player) -> ChaptersMenuConsole:
+def build_console_menu(
+    chapters_file: str,
+    player: Player,
+    reload_option: bool,
+    player_controls_option: bool,
+) -> ChaptersMenuConsole:
     console_builder = ChaptersMenuConsoleBuilder(chapters_file, player)
-    console_builder.build_default_setup()
+    if reload_option:
+        console_builder.build_reload_chapters_item()
+    if player_controls_option:
+        console_builder.build_player_control_menu()
+    console_builder.build_chapters_menu()
     return console_builder.chapters_menu_console
 
 
