@@ -26,7 +26,7 @@ def is_player_useable(player: Player) -> bool:
 
 
 def get_player(player_name: str, running_players: Dict[str, str]) -> Player:
-    """Returns a dbus object instance of the specified player instance.
+    """Returns a wrapped dbus mpris object instance of the specified player instance.
 
     :param player_name: a string containing the name a running player instance.
         Eg. rhythmbox

@@ -252,6 +252,9 @@ def build_console_menu(
     reload_option: bool,
     player_controls_option: bool,
 ) -> ChaptersMenuConsole:
+    """Orchestrates the building of the console menu by using the capabilities of the ChaptersMenuConsoleBuilder.
+    This is the Director in the Builder Pattern"""
+
     console_builder = ChaptersMenuConsoleBuilder(chapters_file, player)
     if reload_option:
         console_builder.build_reload_chapters_item()
