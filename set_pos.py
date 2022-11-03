@@ -2,7 +2,7 @@
 Sets the playback time position, in the currently playing track.
 """
 
-from dbus_mpris.core import Player
+from dbus_mpris.core import PlayerFactory
 import dbus_mpris.helpers as mpris_helpers
 import logging
 import argparse
@@ -32,7 +32,7 @@ def get_cmd_line_args() -> int:
 if __name__ == "__main__":
     try:
         micro_secs = get_cmd_line_args()
-        running_player_names = Player.get_running_player_names()
+        running_player_names = PlayerFactory.get_running_player_names()
         if not running_player_names:
             print("No mpris enabled players are running")
             exit()

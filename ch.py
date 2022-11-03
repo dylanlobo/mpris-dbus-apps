@@ -17,7 +17,7 @@ from consolemenu.items import FunctionItem
 from consolemenu.items import SubmenuItem
 
 import dbus_mpris.helpers as mpris_helpers
-from dbus_mpris.core import NoValidMprisPlayersError, Player
+from dbus_mpris.core import NoValidMprisPlayersError, Player, PlayerFactory
 
 # logging.basicConfig(filename="log.txt", filemode="w", level=logging.DEBUG)
 logging.basicConfig(level=logging.INFO)
@@ -28,7 +28,7 @@ def main():
     arguments = get_arguments()
     player_instance_name = arguments.p
     # Retrieve list of running mpris enabled players
-    running_players = Player.get_running_player_names()
+    running_players = PlayerFactory.get_running_player_names()
     if len(running_players) == 0:
         print("No mpris enabled players are running.")
         return

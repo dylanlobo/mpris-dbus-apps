@@ -3,7 +3,7 @@ import logging
 from typing import Dict, Any
 
 import dbus_mpris.helpers as mpris_helpers
-from dbus_mpris.core import Player
+from dbus_mpris.core import PlayerFactory
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ def get_cmd_line_args():
 if __name__ == "__main__":
     args = get_cmd_line_args()
     try:
-        running_player_names = Player.get_running_player_names()
+        running_player_names = PlayerFactory.get_running_player_names()
         if not running_player_names:
             print("No mpris enabled players are running")
             exit()

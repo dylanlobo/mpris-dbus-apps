@@ -1,9 +1,9 @@
 """
-Skips from the current postion to the time offset, 
+Skips from the current postion to the time offset,
 specified by HH:MM:SS format, in the currently playing track.
 """
 from typing import Tuple
-from dbus_mpris.core import Player
+from dbus_mpris.core import PlayerFactory
 import dbus_mpris.helpers as mpris_helpers
 import argparse
 import logging
@@ -42,7 +42,7 @@ def get_cmd_line_args() -> Tuple[mpris_helpers.Direction, int]:
 if __name__ == "__main__":
     try:
         direction, time_in_ms = get_cmd_line_args()
-        running_player_names = Player.get_running_player_names()
+        running_player_names = PlayerFactory.get_running_player_names()
         if not running_player_names:
             print("No mpris enabled players are running")
             exit()

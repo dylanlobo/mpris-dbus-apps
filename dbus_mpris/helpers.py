@@ -4,7 +4,7 @@ Helper functions for mpris-dbus-apps
 
 import re
 import logging
-from .core import NoValidMprisPlayersError, Player
+from .core import NoValidMprisPlayersError, Player, PlayerFactory
 from enum import IntEnum
 from functools import lru_cache
 from consolemenu import SelectionMenu
@@ -37,7 +37,8 @@ def get_player(player_name: str, running_players: Dict[str, str]) -> Player:
         specified player instance name.
     """
     mpris_player_name = running_players[player_name]
-    player = Player(mpris_player_name, player_name)
+    fac = PlayerFactory()
+    player = fac.getPlayer(mpris_player_name, player_name)
     return player
 
 
