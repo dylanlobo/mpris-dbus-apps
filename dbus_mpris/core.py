@@ -397,7 +397,7 @@ class PlayerFactory:
                 running_players[service_suffix] = str(service)
         return running_players
 
-    def getPlayer(self, fq_player_name, short_player_name) -> Player:
+    def get_player(self, fq_player_name, short_player_name) -> Player:
         try:
             type(dbus)
             logger.info("Creating a Player_dbus_python instance.")

@@ -38,7 +38,7 @@ def get_player(player_name: str, running_players: Dict[str, str]) -> Player:
     """
     mpris_player_name = running_players[player_name]
     fac = PlayerFactory()
-    player = fac.getPlayer(mpris_player_name, player_name)
+    player = fac.get_player(mpris_player_name, player_name)
     return player
 
 
