@@ -6,10 +6,10 @@ from typing import Any, Dict
 from functools import lru_cache, cached_property
 
 try:
-    import pydbus
-except ImportError:
     import dbus
     from dbus import DBusException
+except ImportError:
+    import pydbus
 
 
 logger = logging.getLogger(__name__)
@@ -397,7 +397,8 @@ class PlayerFactory:
                 running_players[service_suffix] = str(service)
         return running_players
 
-    def get_player(self, fq_player_name, short_player_name) -> Player:
+    @staticmethod
+    def get_player(fq_player_name, short_player_name) -> Player:
         try:
             type(dbus)
             logger.info("Creating a Player_dbus_python instance.")
