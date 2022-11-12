@@ -10,7 +10,7 @@ import json
 import logging
 import os
 from json.decoder import JSONDecodeError
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Any
 
 from consolemenu import ConsoleMenu
 from consolemenu.items import FunctionItem
@@ -20,7 +20,7 @@ import dbus_mpris.helpers as mpris_helpers
 from dbus_mpris.core import NoValidMprisPlayersError, Player, PlayerFactory
 
 # logging.basicConfig(filename="log.txt", filemode="w", level=logging.DEBUG)
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
 
 
@@ -123,15 +123,14 @@ class ChaptersMenuConsole:
         self._console_main_menu = ConsoleMenu(title=self._title, subtitle="Chapters")
 
     @property
-    def console_main_menu(self) -> ConsoleMenu:
-        return self._console_main_menu
-
-    @property
     def reload_chapters_on_exit(self) -> bool:
         return self._reload_chapters
 
+    def append_main_menu_item(self,menu_item: Any):
+        self._console_main_menu.append_item(menu_item)
+
     def display_menu(self):
-        self.console_main_menu.show()
+        self._console_main_menu.show()
 
     def set_reload_chapters_on_exit(self) -> None:
         self._reload_chapters = True
@@ -184,7 +183,7 @@ class ChaptersMenuConsoleBuilder:
         self.build_chapters_menu()
 
     def build_reload_chapters_item(self) -> None:
-        self.chapters_menu_console.console_main_menu.append_item(
+        self.chapters_menu_console.append_main_menu_item(
             FunctionItem(
                 "Reload Chapters",
                 self.chapters_menu_console.set_reload_chapters_on_exit,
@@ -194,7 +193,7 @@ class ChaptersMenuConsoleBuilder:
 
     def build_chapters_menu(self):
         for chapter_name, time_offset in self._chapters.items():
-            self.chapters_menu_console.console_main_menu.append_item(
+            self.chapters_menu_console.append_main_menu_item(
                 FunctionItem(
                     f"{chapter_name} ({time_offset})",
                     self._player.set_position,
@@ -206,7 +205,6 @@ class ChaptersMenuConsoleBuilder:
         command_menu = ConsoleMenu(title="Player Control Commands")
         command_submenu_item = SubmenuItem(
             text="Player Control Commands",
-            menu=self.chapters_menu_console.console_main_menu,
             submenu=command_menu,
         )
         command_menu.append_item(
@@ -243,7 +241,7 @@ class ChaptersMenuConsoleBuilder:
                 [mpris_helpers.to_microsecs("00:01:00") * -1],
             )
         )
-        self.chapters_menu_console.console_main_menu.append_item(command_submenu_item)
+        self.chapters_menu_console.append_main_menu_item(command_submenu_item)
 
 
 def build_console_menu(
