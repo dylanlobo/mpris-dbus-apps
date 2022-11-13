@@ -16,8 +16,10 @@ from consolemenu import ConsoleMenu
 from consolemenu.items import FunctionItem
 from consolemenu.items import SubmenuItem
 
-import dbus_mpris.helpers as mpris_helpers
-from dbus_mpris.core import NoValidMprisPlayersError, Player, PlayerFactory
+import lib.dbus_mpris.helpers as mpris_helpers
+from lib.dbus_mpris.core import NoValidMprisPlayersError, Player, PlayerFactory
+
+from lib.ui.ui import ChaptersMenuConsole, ChaptersMenuConsoleBuilder
 
 # logging.basicConfig(filename="log.txt", filemode="w", level=logging.DEBUG)
 logging.basicConfig(level=logging.ERROR)
