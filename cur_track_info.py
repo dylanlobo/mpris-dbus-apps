@@ -2,8 +2,8 @@ import argparse
 import logging
 from typing import Dict, Any
 
-import dbus_mpris.helpers as mpris_helpers
-from dbus_mpris.core import PlayerFactory
+import lib.dbus_mpris.helpers as mpris_helpers
+from lib.dbus_mpris.core import PlayerFactory
 
 logger = logging.getLogger(__name__)
 

@@ -3,8 +3,8 @@ Skips from the current postion to the time offset,
 specified by HH:MM:SS format, in the currently playing track.
 """
 from typing import Tuple
-from dbus_mpris.core import PlayerFactory
-import dbus_mpris.helpers as mpris_helpers
+from lib.dbus_mpris.core import PlayerFactory
+import lib.dbus_mpris.helpers as mpris_helpers
 import argparse
 import logging
 
