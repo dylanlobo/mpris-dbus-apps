@@ -1,8 +1,17 @@
+import json
+import logging
+import os
+
 from consolemenu import ConsoleMenu
 from consolemenu.items import FunctionItem
 from consolemenu.items import SubmenuItem
-from typing import Any,Tuple,Dict
+from json import JSONDecodeError
+from typing import Any, Tuple, Dict
 from ..dbus_mpris.core import Player
+from ..dbus_mpris import helpers as mpris_helpers
+
+logging.basicConfig(level=logging.ERROR)
+logger = logging.getLogger(__name__)
 
 
 class ChaptersMenuConsole:
@@ -15,7 +24,7 @@ class ChaptersMenuConsole:
     def reload_chapters_on_exit(self) -> bool:
         return self._reload_chapters
 
-    def append_main_menu_item(self,menu_item: Any):
+    def append_main_menu_item(self, menu_item: Any):
         self._console_main_menu.append_item(menu_item)
 
     def display_menu(self):
@@ -23,6 +32,7 @@ class ChaptersMenuConsole:
 
     def set_reload_chapters_on_exit(self) -> None:
         self._reload_chapters = True
+
 
 class ChaptersMenuConsoleBuilder:
     def __init__(self, chapters_filename: str, player: Player) -> None:
@@ -64,7 +74,6 @@ class ChaptersMenuConsoleBuilder:
     @property
     def chapters_menu_console(self) -> ChaptersMenuConsole:
         return self._chapters_menu_console
-
 
     def build_complete_setup(self) -> None:
         self.build_reload_chapters_item()
@@ -131,4 +140,3 @@ class ChaptersMenuConsoleBuilder:
             )
         )
         self.chapters_menu_console.append_main_menu_item(command_submenu_item)
-
