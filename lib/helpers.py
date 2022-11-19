@@ -1,14 +1,16 @@
 """
-Helper functions for mpris-dbus-apps 
+Helper functions for mpris-dbus-apps
 """
 
 import re
 import logging
-from .core import NoValidMprisPlayersError, Player, PlayerFactory
+import os
+import json
+from lib.dbus_mpris.core import NoValidMprisPlayersError, Player, PlayerFactory
 from enum import IntEnum
 from functools import lru_cache
 from consolemenu import SelectionMenu
-from typing import List, Dict
+from typing import List, Dict, Tuple
 
 
 logger = logging.getLogger(__name__)
@@ -91,6 +93,28 @@ def to_HHMMSS(microsecs: int) -> str:
     min_s = f"{minutes}" if minutes > 9 else f"0{minutes}"
     hr_s = f"{hours}" if hours > 9 else f"0{hours}"
     return f"{hr_s}:{min_s}:{sec_s}"
+
+
+def load_chapters_file(chapters_file: str) -> Tuple[str, Dict[str, str]]:
+    if os.path.isfile(chapters_file) is False:
+        logger.error(f"{chapters_file} does not exist")
+        raise FileNotFoundError(f"{chapters_file} does not exist")
+    chapters = {}
+    title = "No Title"
+    try:
+        with open(chapters_file, "r") as f:
+            json_dict = json.load(f)
+    except json.JSONDecodeError as e:
+        logger.critical(f"The file {chapters_file} is not a valid JSON document. {e}")
+        raise ValueError(f"The file {chapters_file} is not a valid JSON document.")
+
+    if json_dict["title"]:
+        title = json_dict["title"]
+    if json_dict["chapters"]:
+        chapters = json_dict["chapters"]
+    else:
+        raise ValueError(f'{chapters_file} file is missing "chapters" object')
+    return title, chapters
 
 
 def get_selected_player(running_players: Dict[str, str]) -> Player:

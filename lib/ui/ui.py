@@ -8,7 +8,7 @@ from consolemenu.items import SubmenuItem
 from json import JSONDecodeError
 from typing import Any, Tuple, Dict
 from ..dbus_mpris.core import Player
-from ..dbus_mpris import helpers as mpris_helpers
+from .. import helpers as mpris_helpers
 
 logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)

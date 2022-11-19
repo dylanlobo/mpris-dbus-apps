@@ -1,6 +1,6 @@
 """Creates a console based menu of chapters, from a default file named ch.json in
 the current directory. A chapters file may also be specified with the -f
-option. On startup, the application displays a list of running MPRIS enabled 
+option. On startup, the application displays a list of running MPRIS enabled
 players to connect to. If only one player is running then it directly connects
 to the running player.
 """
@@ -8,7 +8,7 @@ to the running player.
 import argparse
 import logging
 
-import lib.dbus_mpris.helpers as mpris_helpers
+import lib.helpers as mpris_helpers
 from lib.dbus_mpris.core import NoValidMprisPlayersError, Player, PlayerFactory
 from lib.ui.ui import ChaptersMenuConsole, ChaptersMenuConsoleBuilder
 
@@ -82,8 +82,8 @@ def get_arguments() -> argparse.Namespace:
         required=False,
         default="ch.json",
         help="The file name of the file containing the "
-             "chapter titles and their time offsets in a JSON document: "
-             '{"title":"title name", "chapters":{"first chapter name" : "hh:mm:ss","second chapter name" : "hh:mm:ss"}}',
+        "chapter titles and their time offsets in a JSON document: "
+        '{"title":"title name", "chapters":{"first chapter name" : "hh:mm:ss","second chapter name" : "hh:mm:ss"}}',
     )
     parser.add_argument(
         "-p",
@@ -110,10 +110,10 @@ def get_arguments() -> argparse.Namespace:
 
 
 def build_console_menu(
-        chapters_file: str,
-        player: Player,
-        reload_option: bool,
-        player_controls_option: bool,
+    chapters_file: str,
+    player: Player,
+    reload_option: bool,
+    player_controls_option: bool,
 ) -> ChaptersMenuConsole:
     """Orchestrates the building of the console menu by using the capabilities of the ChaptersMenuConsoleBuilder.
     This is the Director in the Builder Pattern"""
