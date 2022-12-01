@@ -89,3 +89,4 @@ funcs = {
     "<<": partial(skip_player, player=selected_player, offset="00:01:00", direction=Direction.REVERSE)
 }
 pc = PlayerControlPanel(rt, funcs)
+rt.mainloop()
