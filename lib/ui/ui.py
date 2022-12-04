@@ -113,16 +113,16 @@ class ChaptersMenuConsoleBuilder:
         )
         command_menu.append_item(
             FunctionItem(
-                "Skip Forward 30 sec",
+                "Skip Forward 10 sec",
                 self._player.seek,
-                [mpris_helpers.to_microsecs("00:00:30")],
+                [mpris_helpers.to_microsecs("00:00:10")],
             )
         )
         command_menu.append_item(
             FunctionItem(
-                "Skip Back 30 sec",
+                "Skip Back 10 sec",
                 self._player.seek,
-                [mpris_helpers.to_microsecs("00:00:30") * -1],
+                [mpris_helpers.to_microsecs("00:00:10") * -1],
             )
         )
         command_menu.append_item(
