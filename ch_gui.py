@@ -7,11 +7,13 @@ from lib.helpers import Direction
 from lib.dbus_mpris.core import NoValidMprisPlayersError, Player, PlayerFactory
 
 
-class ActionListBoxPanel(ttk.LabelFrame):
+class ChaptersPanel(ttk.LabelFrame):
 
-    def __init__(self, master=None, title: str = None, chapters: List[str] = None,
-                 chapters_pos_funcs: List[callable] = None):
+    def __init__(self, master:tk.Tk, chapters: List[str],
+                 chapters_pos_funcs: List[callable]):
         super().__init__(master, text="Chapters")
+        self._chapters = chapters
+        self._chapter_pos_funcs = chapters_pos_funcs
         lb_height = len(chapters) if len(chapters) < 10 else 10
         lb = tk.Listbox(self, listvariable=tk.StringVar(value=chapters), width=60, height=lb_height)
         lb.grid(column=0, row=0, sticky="NWES")
@@ -21,18 +23,16 @@ class ActionListBoxPanel(ttk.LabelFrame):
         sh = ttk.Scrollbar(self, orient=tk.HORIZONTAL, command=lb.xview)
         sh.grid(column=0, row=1, sticky="EW")
         lb['xscrollcommand'] = sh.set
-        lb.bind("<<ListboxSelect>>", partial(ActionListBoxPanel.lb_selection_handler, func_list=ch_pos_func_list))
-        # ttk.Sizegrip(self).grid(column=1, row=1, sticky="SE")
+        lb.bind("<<ListboxSelect>>", self.lb_selection_handler)
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
         self.grid()
 
-    @staticmethod
-    def lb_selection_handler(event, func_list: List[callable]):
+    def lb_selection_handler(self,event):
         selection = event.widget.curselection()
         if selection:
             index = selection[0]
-            func_list[index]()
+            self._chapter_pos_funcs[index]()
 
 
 class PlayerControlPanel(ttk.LabelFrame):
@@ -52,7 +52,7 @@ class PlayerControlPanel(ttk.LabelFrame):
         self.grid(padx=10, pady=10)
 
 
-def set_player_postion(player: Player, position: str):
+def set_player_position(player: Player, position: str):
     player.set_position(mpris_helpers.to_microsecs(position))
 
 
@@ -65,6 +65,24 @@ def play_pause_player(player: Player):
     player.play_pause()
 
 
+class ChaptersGui(tk.Tk):
+    def __init__(self, media_title:str):
+        super().__init__()
+        self.title(media_title)
+
+    def show_display(self):
+        self.mainloop()
+
+    def buildChaptersPanel(self,chapters_display_names:List[str],chapters_selection_action_functs:List[callable]):
+        ...
+
+    def buildPlayerControlPanel(self,player_control_funcs:List[callable]):
+        ...
+
+
+def build_gui_menu( chapters_file: str, player: Player):
+    ...
+
 running_players = PlayerFactory.get_running_player_names()
 selected_player = mpris_helpers.get_selected_player(running_players)
 title, chapters_and_pos = mpris_helpers.load_chapters_file("ch.json")
@@ -75,12 +93,12 @@ ch_pos_func_list = []
 for chapter, pos in chapters_and_pos.items():
     listbox_items.append(f"{i}.    {chapter} ({pos})")
     ch_list.append(chapter)
-    ch_pos_func_list.append(partial(set_player_postion, selected_player, pos))
+    ch_pos_func_list.append(partial(set_player_position, selected_player, pos))
     i = i + 1
 
 rt = tk.Tk()
 rt.title(title)
-alb = ActionListBoxPanel(rt, chapters=listbox_items)
+alb = ChaptersPanel(rt, chapters=listbox_items,chapters_pos_funcs=ch_pos_func_list)
 funcs = {
     "Play/Pause": partial(play_pause_player, selected_player),
     ">": partial(skip_player, player=selected_player, offset="00:00:10"),
