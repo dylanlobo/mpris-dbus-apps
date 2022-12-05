@@ -11,7 +11,6 @@ try:
 except ImportError:
     import pydbus
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -149,6 +148,91 @@ class Player(ABC):
     @abstractmethod
     def can_play(self) -> bool:
         ...
+
+
+class PlayerProxy(Player):
+
+    def __init__(self, player: Player):
+        self._player = player
+
+    def set_player(self, player: Player):
+        self._player = player
+
+    def raise_window(self) -> None:
+        self._player.raise_window()
+
+    def play(self) -> None:
+        self._player.play()
+
+    def play_pause(self) -> None:
+        self._player.play_pause()
+
+    def pause(self) -> None:
+        self._player.pause()
+
+    def stop(self) -> None:
+        self._player.stop()
+
+    def seek(self, offset: int) -> None:
+        self._player.seek(offset)
+
+    def set_position(self, to_position: int) -> None:
+        self._player.set_position(to_position)
+
+    def get(self, interface_name: str, property_name: str) -> Any:
+        self._player.get(interface_name, property_name)
+
+    @property
+    def mpris_player(self) -> Any:
+        return self._player.mpris_player
+
+    @property
+    def mpris_media_player2(self) -> Any:
+        return self._player.mpris_media_player2
+
+    @property
+    def mpris_player_properties(self) -> Any:
+        return self._player.mpris_player_properties
+
+    @property
+    def name(self) -> str:
+        return self._player.name
+
+    @property
+    def ext_name(self) -> str:
+        return self._player.ext_name
+
+    @property
+    def playback_status(self) -> str:
+        return self._player.playback_status
+
+    @property
+    def position(self) -> int:
+        return self._player.position
+
+    @property
+    def metadata(self) -> Dict[str, Any]:
+        return self._player.metadata
+
+    @property
+    def trackid(self) -> str:
+        return self._player.trackid
+
+    @cached_property
+    def can_control(self) -> bool:
+        return self._player.can_control
+
+    @cached_property
+    def can_seek(self) -> bool:
+        return self._player.can_seek
+
+    @cached_property
+    def can_pause(self) -> bool:
+        return self._player.can_pause
+
+    @cached_property
+    def can_play(self) -> bool:
+        return self._player.can_play
 
 
 class Player_dbus_python(Player):
@@ -393,7 +477,7 @@ class PlayerFactory:
 
         for service in all_service_names:
             if media_player_prefix in service:
-                service_suffix = service[media_player_prefix_len + 1 :]
+                service_suffix = service[media_player_prefix_len + 1:]
                 running_players[service_suffix] = str(service)
         return running_players
 
@@ -402,10 +486,12 @@ class PlayerFactory:
         try:
             type(dbus)
             logger.info("Creating a Player_dbus_python instance.")
-            return Player_dbus_python(fq_player_name, short_player_name)
+            player = Player_dbus_python(fq_player_name, short_player_name)
+            return PlayerProxy(player)
         except NameError:
             logger.info("Creating a Player_pydbus instance.")
-            return Player_pydbus(fq_player_name, short_player_name)
+            player = Player_pydbus(fq_player_name, short_player_name)
+            return PlayerProxy(player)
 
 
 class NoValidMprisPlayersError(Exception):
