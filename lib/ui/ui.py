@@ -37,7 +37,7 @@ class ChaptersMenuConsole:
 class ChaptersMenuConsoleBuilder:
     def __init__(self, chapters_filename: str, player: Player) -> None:
         try:
-            self._chapters_title, self._chapters = self._load_chapters_file(
+            self._chapters_title, self._chapters = mpris_helpers.load_chapters_file(
                 chapters_filename
             )
         except FileNotFoundError as fe:
@@ -46,30 +46,6 @@ class ChaptersMenuConsoleBuilder:
 
         self._chapters_menu_console = ChaptersMenuConsole(title=self._chapters_title)
         self._player = player
-
-    @staticmethod
-    def _load_chapters_file(chapters_file: str) -> Tuple[str, Dict[str, str]]:
-        if os.path.isfile(chapters_file) is False:
-            logger.error(f"{chapters_file} does not exist")
-            raise FileNotFoundError(f"{chapters_file} does not exist")
-        chapters = {}
-        title = "No Title"
-        try:
-            with open(chapters_file, "r") as f:
-                json_dict = json.load(f)
-        except JSONDecodeError as e:
-            logger.critical(
-                f"The file {chapters_file} is not a valid JSON document. {e}"
-            )
-            raise ValueError(f"The file {chapters_file} is not a valid JSON document.")
-
-        if json_dict["title"]:
-            title = json_dict["title"]
-        if json_dict["chapters"]:
-            chapters = json_dict["chapters"]
-        else:
-            raise ValueError(f'{chapters_file} file is missing "chapters" object')
-        return title, chapters
 
     @property
     def chapters_menu_console(self) -> ChaptersMenuConsole:

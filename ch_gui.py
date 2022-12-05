@@ -1,3 +1,4 @@
+import logging
 import tkinter as tk
 from tkinter import ttk
 from typing import List, Dict
@@ -6,14 +7,17 @@ import lib.helpers as mpris_helpers
 from lib.helpers import Direction
 from lib.dbus_mpris.core import NoValidMprisPlayersError, Player, PlayerFactory
 
+logging.basicConfig(level=logging.ERROR)
+logger = logging.getLogger(__name__)
+
 
 class ChaptersPanel(ttk.LabelFrame):
 
-    def __init__(self, master:tk.Tk, chapters: List[str],
-                 chapters_pos_funcs: List[callable]):
+    def __init__(self, master: tk.Tk, chapters: List[str],
+                 chapters_selection_action_functs: List[callable]):
         super().__init__(master, text="Chapters")
         self._chapters = chapters
-        self._chapter_pos_funcs = chapters_pos_funcs
+        self._chapter_selection_action_functs = chapters_selection_action_functs
         lb_height = len(chapters) if len(chapters) < 10 else 10
         lb = tk.Listbox(self, listvariable=tk.StringVar(value=chapters), width=60, height=lb_height)
         lb.grid(column=0, row=0, sticky="NWES")
@@ -28,16 +32,16 @@ class ChaptersPanel(ttk.LabelFrame):
         self.grid_rowconfigure(0, weight=1)
         self.grid()
 
-    def lb_selection_handler(self,event):
+    def lb_selection_handler(self, event):
         selection = event.widget.curselection()
         if selection:
             index = selection[0]
-            self._chapter_pos_funcs[index]()
+            self._chapter_selection_action_functs[index]()
 
 
 class PlayerControlPanel(ttk.LabelFrame):
 
-    def __init__(self, master, player_controls_funcs: Dict[str, callable]):
+    def __init__(self, master: tk.Tk, player_controls_funcs: Dict[str, callable]):
         super().__init__(master, text="Player Controls")
         self.pause_play_button = ttk.Button(self, text="Play/Pause", command=player_controls_funcs["Play/Pause"])
         self.forward_30sec_button = ttk.Button(self, text=">", command=player_controls_funcs[">"])
@@ -66,45 +70,65 @@ def play_pause_player(player: Player):
 
 
 class ChaptersGui(tk.Tk):
-    def __init__(self, media_title:str):
+    def __init__(self, media_title: str):
         super().__init__()
         self.title(media_title)
 
     def show_display(self):
         self.mainloop()
 
-    def buildChaptersPanel(self,chapters_display_names:List[str],chapters_selection_action_functs:List[callable]):
-        ...
 
-    def buildPlayerControlPanel(self,player_control_funcs:List[callable]):
-        ...
+class ChaptersGuiBuilder:
+
+    def __init__(self, chapters_filename: str, player: Player):
+        self._player_control_panel: PlayerControlPanel = None
+        self._chapters_panel: ChaptersPanel = None
+        self._player = player
+        try:
+            self._chapters_title, self._chapters = mpris_helpers.load_chapters_file(
+                chapters_filename
+            )
+        except FileNotFoundError as fe:
+            logger.error(fe)
+            raise fe
+        self._main_window = ChaptersGui(self._chapters_title)
+
+    @property
+    def chapters_gui_window(self) -> ChaptersGui:
+        return self._main_window
+
+    def build_chapters_panel(self):
+        listbox_items: List[str] = []
+        index = 1
+        chapters_position_functions: List[callable] = []
+        chapter: str
+        position: str
+        for chapter, position in self._chapters.items():
+            listbox_items.append(f"{index}.    {chapter} ({position})")
+            chapters_position_functions.append(partial(set_player_position, self._player, position))
+            index = index + 1
+        self._chapters_panel = ChaptersPanel(self._main_window, chapters=listbox_items,
+                                             chapters_selection_action_functs=chapters_position_functions)
+
+    def build_player_control_panel(self):
+        button_action_funcs = {
+            "Play/Pause": partial(play_pause_player, self._player),
+            ">": partial(skip_player, player=selected_player, offset="00:00:10"),
+            ">>": partial(skip_player, player=selected_player, offset="00:01:00"),
+            "<": partial(skip_player, player=selected_player, offset="00:00:10", direction=Direction.REVERSE),
+            "<<": partial(skip_player, player=selected_player, offset="00:01:00", direction=Direction.REVERSE)
+        }
+        self._player_control_panel = PlayerControlPanel(self._main_window, button_action_funcs)
 
 
-def build_gui_menu( chapters_file: str, player: Player):
-    ...
+def build_gui_menu(chapters_filename: str, player: Player) -> ChaptersGui:
+    gui_builder = ChaptersGuiBuilder(chapters_filename, player)
+    gui_builder.build_chapters_panel()
+    gui_builder.build_player_control_panel()
+    return gui_builder.chapters_gui_window
+
 
 running_players = PlayerFactory.get_running_player_names()
 selected_player = mpris_helpers.get_selected_player(running_players)
-title, chapters_and_pos = mpris_helpers.load_chapters_file("ch.json")
-listbox_items = []
-i = 1
-ch_list = []
-ch_pos_func_list = []
-for chapter, pos in chapters_and_pos.items():
-    listbox_items.append(f"{i}.    {chapter} ({pos})")
-    ch_list.append(chapter)
-    ch_pos_func_list.append(partial(set_player_position, selected_player, pos))
-    i = i + 1
-
-rt = tk.Tk()
-rt.title(title)
-alb = ChaptersPanel(rt, chapters=listbox_items,chapters_pos_funcs=ch_pos_func_list)
-funcs = {
-    "Play/Pause": partial(play_pause_player, selected_player),
-    ">": partial(skip_player, player=selected_player, offset="00:00:10"),
-    ">>": partial(skip_player, player=selected_player, offset="00:01:00"),
-    "<": partial(skip_player, player=selected_player, offset="00:00:10", direction=Direction.REVERSE),
-    "<<": partial(skip_player, player=selected_player, offset="00:01:00", direction=Direction.REVERSE)
-}
-pc = PlayerControlPanel(rt, funcs)
-rt.mainloop()
+chapters_gui = build_gui_menu("ch.json", selected_player)
+chapters_gui.show_display()
