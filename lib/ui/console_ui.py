@@ -116,3 +116,21 @@ class ChaptersMenuConsoleBuilder:
             )
         )
         self.chapters_menu_console.append_main_menu_item(command_submenu_item)
+
+
+def build_console_menu(
+        chapters_file: str,
+        player: Player,
+        reload_option: bool,
+        player_controls_option: bool,
+) -> ChaptersMenuConsole:
+    """Orchestrates the building of the console menu by using the capabilities of the ChaptersMenuConsoleBuilder.
+    This is the Director in the Builder Pattern"""
+
+    console_builder = ChaptersMenuConsoleBuilder(chapters_file, player)
+    if reload_option:
+        console_builder.build_reload_chapters_item()
+    if player_controls_option:
+        console_builder.build_player_control_menu()
+    console_builder.build_chapters_menu()
+    return console_builder.chapters_menu_console

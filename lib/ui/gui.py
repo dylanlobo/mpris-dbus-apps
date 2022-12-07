@@ -3,8 +3,8 @@ import tkinter as tk
 from tkinter import ttk
 from typing import List, Dict
 from functools import partial
-import lib.helpers as mpris_helpers
-from lib.helpers import Direction
+from .. import helpers as mpris_helpers
+from ..helpers import Direction
 from lib.dbus_mpris.core import NoValidMprisPlayersError, Player, PlayerFactory
 
 logging.basicConfig(level=logging.ERROR)
@@ -113,10 +113,10 @@ class ChaptersGuiBuilder:
     def build_player_control_panel(self):
         button_action_funcs = {
             "Play/Pause": partial(play_pause_player, self._player),
-            ">": partial(skip_player, player=selected_player, offset="00:00:10"),
-            ">>": partial(skip_player, player=selected_player, offset="00:01:00"),
-            "<": partial(skip_player, player=selected_player, offset="00:00:10", direction=Direction.REVERSE),
-            "<<": partial(skip_player, player=selected_player, offset="00:01:00", direction=Direction.REVERSE)
+            ">": partial(skip_player, player=self._player, offset="00:00:10"),
+            ">>": partial(skip_player, player=self._player, offset="00:01:00"),
+            "<": partial(skip_player, player=self._player, offset="00:00:10", direction=Direction.REVERSE),
+            "<<": partial(skip_player, player=self._player, offset="00:01:00", direction=Direction.REVERSE)
         }
         self._player_control_panel = PlayerControlPanel(self._main_window, button_action_funcs)
 
@@ -128,7 +128,8 @@ def build_gui_menu(chapters_filename: str, player: Player) -> ChaptersGui:
     return gui_builder.chapters_gui_window
 
 
-running_players = PlayerFactory.get_running_player_names()
-selected_player = mpris_helpers.get_selected_player(running_players)
-chapters_gui = build_gui_menu("ch.json", selected_player)
-chapters_gui.show_display()
+if __name__ == "__main__":
+    running_players = PlayerFactory.get_running_player_names()
+    selected_player = mpris_helpers.get_selected_player(running_players)
+    chapters_gui = build_gui_menu("ch.json", selected_player)
+    chapters_gui.show_display()

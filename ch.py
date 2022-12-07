@@ -9,8 +9,9 @@ import argparse
 import logging
 
 import lib.helpers as mpris_helpers
-from lib.dbus_mpris.core import NoValidMprisPlayersError, Player, PlayerFactory
-from lib.ui.ui import ChaptersMenuConsole, ChaptersMenuConsoleBuilder
+from lib.dbus_mpris.core import NoValidMprisPlayersError, PlayerFactory
+from lib.ui.console_ui import build_console_menu
+from lib.ui.gui import build_gui_menu
 
 # logging.basicConfig(filename="log.txt", filemode="w", level=logging.DEBUG)
 logging.basicConfig(level=logging.ERROR)
@@ -37,23 +38,10 @@ def main():
             selected_player = mpris_helpers.get_selected_player(running_players)
         logger.info("Created player")
         chapters_file = arguments.f
-        chapters_console_menu = build_console_menu(
-            chapters_file=chapters_file,
-            player=selected_player,
-            reload_option=arguments.r,
-            player_controls_option=arguments.c,
-        )
-        while True:
-            chapters_console_menu.display_menu()
-            if chapters_console_menu.reload_chapters_on_exit:
-                chapters_console_menu = build_console_menu(
-                    chapters_file=chapters_file,
-                    player=selected_player,
-                    reload_option=arguments.r,
-                    player_controls_option=arguments.c,
-                )
-            else:
-                break
+        if arguments.g:
+            launch_gui(arguments, chapters_file, selected_player)
+        else:
+            launch_console(arguments, chapters_file, selected_player)
 
     except NoValidMprisPlayersError as err:
         print(err)
@@ -61,9 +49,34 @@ def main():
         print(
             "Chapters file not found. Use -h option to learn how to provide a chapters file."
         )
-    except Exception as err:
-        logger.error(err)
+    #    except Exception as err:
+    #        logger.error(err)
     return
+
+
+def launch_gui(arguments, chapters_file, player):
+    gui_window = build_gui_menu(chapters_file, player)
+    gui_window.show_display()
+
+
+def launch_console(arguments, chapters_file, selected_player):
+    chapters_console_menu = build_console_menu(
+        chapters_file=chapters_file,
+        player=selected_player,
+        reload_option=arguments.r,
+        player_controls_option=arguments.c,
+    )
+    while True:
+        chapters_console_menu.display_menu()
+        if chapters_console_menu.reload_chapters_on_exit:
+            chapters_console_menu = build_console_menu(
+                chapters_file=chapters_file,
+                player=selected_player,
+                reload_option=arguments.r,
+                player_controls_option=arguments.c,
+            )
+        else:
+            break
 
 
 def get_arguments() -> argparse.Namespace:
@@ -82,8 +95,8 @@ def get_arguments() -> argparse.Namespace:
         required=False,
         default="ch.json",
         help="The file name of the file containing the "
-        "chapter titles and their time offsets in a JSON document: "
-        '{"title":"title name", "chapters":{"first chapter name" : "hh:mm:ss","second chapter name" : "hh:mm:ss"}}',
+             "chapter titles and their time offsets in a JSON document: "
+             '{"title":"title name", "chapters":{"first chapter name" : "hh:mm:ss","second chapter name" : "hh:mm:ss"}}',
     )
     parser.add_argument(
         "-p",
@@ -96,35 +109,24 @@ def get_arguments() -> argparse.Namespace:
         action="store_true",
         required=False,
         default=False,
-        help="Include a option to reload the chapters file.",
+        help="Include a option to reload the chapters file. Only for console mode.",
     )
     parser.add_argument(
         "-c",
         action="store_true",
         required=False,
         default=False,
-        help="Include a option to control the player via a sub-menu",
+        help="Include a option to control the player via a sub-menu. Only for console mode.",
+    )
+    parser.add_argument(
+        "-g",
+        action="store_true",
+        required=False,
+        default=False,
+        help="Launch graphical user interface.",
     )
     arguments = parser.parse_args()
     return arguments
-
-
-def build_console_menu(
-    chapters_file: str,
-    player: Player,
-    reload_option: bool,
-    player_controls_option: bool,
-) -> ChaptersMenuConsole:
-    """Orchestrates the building of the console menu by using the capabilities of the ChaptersMenuConsoleBuilder.
-    This is the Director in the Builder Pattern"""
-
-    console_builder = ChaptersMenuConsoleBuilder(chapters_file, player)
-    if reload_option:
-        console_builder.build_reload_chapters_item()
-    if player_controls_option:
-        console_builder.build_player_control_menu()
-    console_builder.build_chapters_menu()
-    return console_builder.chapters_menu_console
 
 
 if __name__ == "__main__":
