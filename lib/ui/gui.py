@@ -89,6 +89,8 @@ class ChaptersGui(tk.Tk):
         self.title(media_title)
 
     def show_display(self):
+        self.grid()
+        self.resizable(width=False, height=False)
         self.mainloop()
 
 
