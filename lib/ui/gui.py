@@ -5,7 +5,7 @@ from typing import List, Dict
 from functools import partial
 from .. import helpers as mpris_helpers
 from ..helpers import Direction
-from lib.dbus_mpris.core import NoValidMprisPlayersError, Player, PlayerFactory
+from lib.dbus_mpris.core import Player
 
 logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
@@ -156,10 +156,3 @@ def build_gui_menu(chapters_filename: str, player: Player) -> ChaptersGui:
     gui_builder.build_chapters_panel()
     gui_builder.build_player_control_panel()
     return gui_builder.chapters_gui_window
-
-
-if __name__ == "__main__":
-    running_players = PlayerFactory.get_running_player_names()
-    selected_player = mpris_helpers.get_selected_player(running_players)
-    chapters_gui = build_gui_menu("ch.json", selected_player)
-    chapters_gui.show_display()
