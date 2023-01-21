@@ -66,17 +66,9 @@ def launch_console(arguments, chapters_file, selected_player):
         reload_option=arguments.r,
         player_controls_option=arguments.c,
     )
-    while True:
-        chapters_console_menu.display_menu()
-        if chapters_console_menu.reload_chapters_on_exit:
-            chapters_console_menu = build_console_menu(
-                chapters_file=chapters_file,
-                player=selected_player,
-                reload_option=arguments.r,
-                player_controls_option=arguments.c,
-            )
-        else:
-            break
+    chapters_console_menu.display_menu()
+    if chapters_console_menu.reload_chapters_on_exit:
+        launch_console(arguments, chapters_file, selected_player)
 
 
 def get_arguments() -> argparse.Namespace:
@@ -95,8 +87,8 @@ def get_arguments() -> argparse.Namespace:
         required=False,
         default="ch.json",
         help="The file name of the file containing the "
-             "chapter titles and their time offsets in a JSON document: "
-             '{"title":"title name", "chapters":{"first chapter name" : "hh:mm:ss","second chapter name" : "hh:mm:ss"}}',
+        "chapter titles and their time offsets in a JSON document: "
+        '{"title":"title name", "chapters":{"first chapter name" : "hh:mm:ss","second chapter name" : "hh:mm:ss"}}',
     )
     parser.add_argument(
         "-p",
