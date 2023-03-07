@@ -1,26 +1,7 @@
-#!/usr/bin/env python3
-
 import tkinter as tk
 
-def apply_icon(w):
-    try:
-        icon = tk.PhotoImage(data=icondata)
-        w.iconphoto(True, icon)
-    except Exception as e:
-        print("Could not load icon due to:\n  ",e)
 
-def main():
-    root = tk.Tk()
-    apply_icon(root)
-    root.geometry('200x200')
-
-    # YOUR CODE HERE!!
-    lbl = tk.Label(root, text="Icon test program")
-    lbl.pack()
-
-    root.mainloop()
-
-icondata = '''
+icondata = """
 R0lGODlhQABAAIUAAAAAALe3t6ioqMfHx9XV1QQEBAAAAObm5pqamgAAAJeXl8bGxqenp7i4uNfX
 1wcHB3Nzc7a2thgYGElJSYeHh8nJydnZ2eXl5ScnJzMzM6Ojo9bW1vT09CgoKEdHR19fX2hoaIiI
 iIWFhcrKyh8fHzo6Ol1dXWNjY2FhYXNzc3t7e4mJibOzs729vcrKyunp6QAAAAAAAAAAAAAAAAAA
@@ -33,8 +14,12 @@ ONDkBZYz3su0LwIIGJQL7ixXAXbt3MOLux9Pvrz58+jTq19vtcOFFyzYD4RcEWOFDusnri5pEuV5
 /aEdcEEF5YEFGn8bhBCegQeKdIADZDVmWmqoEbDaCAoqBhuFHFoIIWIbcijiACCNkIJeaPXGG4m2
 RWjVbirOJsAJ0r3IUox0iZBddNvZ6JtzzrUkgAmASRXXSkA6J0IGePWoF09J+oTAB0U6yRyUQFLA
 pHCl8VRddQJMWaV4S32pZZPmFYBAmCgEZxh6BpSApnx01mnnnXjaGRAAOw==
-'''
+"""
 
-if __name__ == '__main__':
-    main()
 
+def apply_icon(w):
+    try:
+        icon = tk.PhotoImage(data=icondata)
+        w.iconphoto(True, icon)
+    except Exception as e:
+        print("Could not load icon due to:\n  ", e)
