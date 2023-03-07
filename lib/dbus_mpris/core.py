@@ -151,7 +151,6 @@ class Player(ABC):
 
 
 class PlayerProxy(Player):
-
     def __init__(self, player: Player):
         self._player = player
 
@@ -159,80 +158,127 @@ class PlayerProxy(Player):
         self._player = player
 
     def raise_window(self) -> None:
-        self._player.raise_window()
+        if self._player:
+            self._player.raise_window()
 
     def play(self) -> None:
-        self._player.play()
+        if self._player:
+            self._player.play()
 
     def play_pause(self) -> None:
-        self._player.play_pause()
+        if self._player:
+            self._player.play_pause()
 
     def pause(self) -> None:
-        self._player.pause()
+        if self._player:
+            self._player.pause()
 
     def stop(self) -> None:
-        self._player.stop()
+        if self._player:
+            self._player.stop()
 
     def seek(self, offset: int) -> None:
-        self._player.seek(offset)
+        if self._player:
+            self._player.seek(offset)
 
     def set_position(self, to_position: int) -> None:
-        self._player.set_position(to_position)
+        if self._player:
+            self._player.set_position(to_position)
 
     def get(self, interface_name: str, property_name: str) -> Any:
-        self._player.get(interface_name, property_name)
+        if self._player:
+            self._player.get(interface_name, property_name)
 
     @property
     def mpris_player(self) -> Any:
-        return self._player.mpris_player
+        if self._player:
+            return self._player.mpris_player
+        else:
+            return None
 
     @property
     def mpris_media_player2(self) -> Any:
-        return self._player.mpris_media_player2
+        if self._player:
+            return self._player.mpris_media_player2
+        else:
+            return None
 
     @property
     def mpris_player_properties(self) -> Any:
-        return self._player.mpris_player_properties
+        if self._player:
+            return self._player.mpris_player_properties
+        else:
+            return None
 
     @property
     def name(self) -> str:
-        return self._player.name
+        if self._player:
+            return self._player.name
+        else:
+            return None
 
     @property
     def ext_name(self) -> str:
-        return self._player.ext_name
+        if self._player:
+            return self._player.ext_name
+        else:
+            return None
 
     @property
     def playback_status(self) -> str:
-        return self._player.playback_status
+        if self._player:
+            return self._player.playback_status
+        else:
+            return None
 
     @property
     def position(self) -> int:
-        return self._player.position
+        if self._player:
+            return self._player.position
+        else:
+            return None
 
     @property
     def metadata(self) -> Dict[str, Any]:
-        return self._player.metadata
+        if self._player:
+            return self._player.metadata
+        else:
+            return None
 
     @property
     def trackid(self) -> str:
-        return self._player.trackid
+        if self._player:
+            return self._player.trackid
+        else:
+            return None
 
     @cached_property
     def can_control(self) -> bool:
-        return self._player.can_control
+        if self._player:
+            return self._player.can_control
+        else:
+            return None
 
     @cached_property
     def can_seek(self) -> bool:
-        return self._player.can_seek
+        if self._player:
+            return self._player.can_seek
+        else:
+            return None
 
     @cached_property
     def can_pause(self) -> bool:
-        return self._player.can_pause
+        if self._player:
+            return self._player.can_pause
+        else:
+            return None
 
     @cached_property
     def can_play(self) -> bool:
-        return self._player.can_play
+        if self._player:
+            return self._player.can_play
+        else:
+            return None
 
 
 class Player_dbus_python(Player):
@@ -477,7 +523,7 @@ class PlayerFactory:
 
         for service in all_service_names:
             if media_player_prefix in service:
-                service_suffix = service[media_player_prefix_len + 1:]
+                service_suffix = service[media_player_prefix_len + 1 :]
                 running_players[service_suffix] = str(service)
         return running_players
 

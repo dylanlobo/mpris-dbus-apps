@@ -87,9 +87,10 @@ class AppMainWindow(tk.Tk):
     protocol as part of an MVP implementation"""
 
     def __init__(self, media_title: str):
-        super().__init__()
+        super().__init__(className="Chapters")
         self.title(media_title)
         icon.apply_icon(self)
+        self.wm_title()
 
     @property
     def chapters_panel(self):
@@ -130,7 +131,10 @@ class AppGuiBuilder:
         self._player_control_panel: PlayerControlPanel = None
         self._chapters_panel: ChaptersPanel = None
         self._main_window = AppMainWindow("Chapters Player")
-        self._player = player
+        if not player:
+            self._player = PlayerProxy(None)
+        else:
+            self._player = player
         self._gui_controller = GuiController(self._main_window, self._player, self)
 
     @property
@@ -183,11 +187,18 @@ class AppGuiBuilder:
         return (chapters_title, listbox_items, chapters_position_functions)
 
     def build_chapters_panel(self):
-        (
-            self._chapters_title,
-            self._chapters_listbox_items,
-            self._chapters_position_functions,
-        ) = self.get_chapters_listbox_contents(self._chapters_filename, self._player)
+        if self._chapters_filename:
+            (
+                self._chapters_title,
+                self._chapters_listbox_items,
+                self._chapters_position_functions,
+            ) = self.get_chapters_listbox_contents(
+                self._chapters_filename, self._player
+            )
+        else:
+            self._chapters_title = ""
+            self._chapters_listbox_items = []
+            self._chapters_position_functions = []
         self._main_window.title(self._chapters_title)
         self._main_window.chapters_panel = ChaptersPanel(
             self._main_window,
@@ -369,7 +380,7 @@ class GuiController:
     def handle_connection_command(self):
         running_player_names = PlayerFactory.get_running_player_names()
         self.popup = PlayerConnectionPopup(
-            master=AppGuiBuilder.main_window,
+            master=self._view,
             running_players=running_player_names,
             set_cur_player=self.set_cur_player,
         )

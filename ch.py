@@ -28,19 +28,19 @@ def main():
         return
 
     try:
-        logger.info("Creating player")
-        if player_instance_name:
-            logger.info(f"Player name specified via -p is {player_instance_name}")
-            selected_player = mpris_helpers.get_player(
-                player_instance_name, running_players
-            )
-        else:
-            selected_player = mpris_helpers.get_selected_player(running_players)
-        logger.info("Created player")
-        chapters_file = arguments.f
         if arguments.g:
-            launch_gui(arguments, chapters_file, selected_player)
+            launch_gui(arguments, None, None)
         else:
+            logger.info("Creating player")
+            if player_instance_name:
+                logger.info(f"Player name specified via -p is {player_instance_name}")
+                selected_player = mpris_helpers.get_player(
+                    player_instance_name, running_players
+                )
+            else:
+                selected_player = mpris_helpers.get_selected_player(running_players)
+            logger.info("Created player")
+            chapters_file = arguments.f
             launch_console(arguments, chapters_file, selected_player)
 
     except NoValidMprisPlayersError as err:
