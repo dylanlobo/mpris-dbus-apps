@@ -1,7 +1,9 @@
 import logging
 import tkinter as tk
+from tkinter import filedialog
+from pathlib import Path
 from tkinter import ttk
-from typing import List, Dict
+from typing import Tuple, List, Dict, Protocol
 from functools import partial
 from .. import helpers as mpris_helpers
 from ..helpers import Direction
@@ -25,6 +27,7 @@ class ChaptersPanel(ttk.LabelFrame):
         lb = tk.Listbox(
             self, listvariable=tk.StringVar(value=chapters), width=60, height=lb_height
         )
+        self._chapters_lb = lb
         lb.grid(column=0, row=0, sticky="NWES")
         sv = ttk.Scrollbar(self, orient=tk.VERTICAL, command=lb.yview)
         sv.grid(column=1, row=0, sticky="NS")
@@ -36,6 +39,13 @@ class ChaptersPanel(ttk.LabelFrame):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
         self.grid()
+
+    def set_chapters(
+        self, chapters: List[str], chapters_selection_action_functs: List[callable]
+    ):
+        self._chapter_selection_action_functs = chapters_selection_action_functs
+        self._chapters_lb.delete(0, tk.END)
+        self._chapters_lb.insert(tk.END, *chapters)
 
     def lb_selection_handler(self, event):
         selection = event.widget.curselection()
@@ -70,39 +80,151 @@ class PlayerControlPanel(ttk.LabelFrame):
         self.grid(padx=10, pady=10)
 
 
-def set_player_position(player: PlayerProxy, position: str):
-    player.set_position(mpris_helpers.to_microsecs(position))
+class AppMainWindow(tk.Tk):
+    """The main window for the application. In addation, this class implements a View
+    protocol as part of an MVP implementation"""
 
-
-def skip_player(
-    player: PlayerProxy, offset: str, direction: Direction = Direction.FORWARD
-):
-    offset_with_dir = mpris_helpers.to_microsecs(offset) * direction
-    player.seek(offset_with_dir)
-
-
-def play_pause_player(player: PlayerProxy):
-    player.play_pause()
-
-
-class ChaptersGui(tk.Tk):
     def __init__(self, media_title: str):
         super().__init__()
         self.title(media_title)
+
+    @property
+    def chapters_panel(self):
+        return self._chapters_panel
+
+    @chapters_panel.setter
+    def chapters_panel(self, chapters_panel: ChaptersPanel):
+        self._chapters_panel = chapters_panel
+
+    @property
+    def player_control_panel(self):
+        return self._player_control_panel
+
+    @player_control_panel.setter
+    def player_control_panel(self, player_control_panel: PlayerControlPanel):
+        self._player_control_panel = player_control_panel
 
     def show_display(self):
         self.grid()
         self.resizable(width=False, height=False)
         self.mainloop()
 
+    def set_main_window_title(self, media_title: str):
+        self.title(media_title)
+
+    def set_chapters(
+        self, chapters: List[str], chapters_selection_action_functs: List[callable]
+    ):
+        self._chapters_panel.set_chapters(
+            chapters=chapters,
+            chapters_selection_action_functs=chapters_selection_action_functs,
+        )
+
+
+class AppGuiBuilder:
+    def __init__(self, chapters_filename: str, player: PlayerProxy):
+        self._chapters_filename = chapters_filename
+        self._player_control_panel: PlayerControlPanel = None
+        self._chapters_panel: ChaptersPanel = None
+        self._main_window = AppMainWindow("Chapters Player")
+        self._player = player
+        self._gui_controller = GuiController(self._main_window, self._player, self)
+
     @property
-    def root_window(self):
-        return self._root
+    def chapters_gui_window(self) -> AppMainWindow:
+        return self._main_window
+
+    @property
+    def player(self) -> PlayerProxy:
+        return self._player
+
+    def build_menu_bar(self):
+        menu_bar = tk.Menu(master=self._main_window)
+        self._main_window.config(menu=menu_bar)
+
+        connection_menu = tk.Menu(menu_bar, tearoff=0)
+        menu_bar.add_cascade(label="Connect", menu=connection_menu)
+        connection_menu.add_command(
+            label="Connect to player ...",
+            command=self._gui_controller.handle_connection_command,
+        )
+
+        chapters_menu = tk.Menu(menu_bar, tearoff=0)
+        chapters_menu.add_command(
+            label="Select chapters file ...",
+            command=self._gui_controller.handle_load_chapters_file_command,
+        )
+        menu_bar.add_cascade(label="Load Chapters", menu=chapters_menu)
+
+    def get_chapters_listbox_contents(
+        self, chapters_filename: str, player: PlayerProxy
+    ) -> Tuple[str, Dict[str, str], List[callable]]:
+        chapters_title: str = None
+        chapters: Dict[str, str] = None
+        try:
+            chapters_title, chapters = mpris_helpers.load_chapters_file(
+                chapters_filename
+            )
+        except FileNotFoundError as fe:
+            logger.error(fe)
+            raise fe
+        listbox_items: List[str] = []
+        chapters_position_functions: List[callable] = []
+        chapter: str
+        position: str
+        for index, (chapter, position) in enumerate(chapters.items()):
+            listbox_items.append(f"{index+1}.    {chapter} ({position})")
+            chapters_position_functions.append(
+                partial(self._gui_controller.set_player_position, position)
+            )
+        return (chapters_title, listbox_items, chapters_position_functions)
+
+    def build_chapters_panel(self):
+        (
+            self._chapters_title,
+            self._chapters_listbox_items,
+            self._chapters_position_functions,
+        ) = self.get_chapters_listbox_contents(self._chapters_filename, self._player)
+        self._main_window.title(self._chapters_title)
+        self._main_window.chapters_panel = ChaptersPanel(
+            self._main_window,
+            chapters=self._chapters_listbox_items,
+            chapters_selection_action_functs=self._chapters_position_functions,
+        )
+
+    def build_player_control_panel(self):
+        button_action_funcs = {
+            "Play/Pause": partial(self._gui_controller.play_pause_player),
+            ">": partial(self._gui_controller.skip_player, offset="00:00:10"),
+            ">>": partial(self._gui_controller.skip_player, offset="00:01:00"),
+            "<": partial(
+                self._gui_controller.skip_player,
+                offset="00:00:10",
+                direction=Direction.REVERSE,
+            ),
+            "<<": partial(
+                self._gui_controller.skip_player,
+                offset="00:01:00",
+                direction=Direction.REVERSE,
+            ),
+        }
+        self._main_window.player_control_panel = PlayerControlPanel(
+            self._main_window, button_action_funcs
+        )
+
+
+def build_gui_menu(chapters_filename: str, player: PlayerProxy) -> AppMainWindow:
+    gui_builder = AppGuiBuilder(chapters_filename, player)
+    gui_builder.build_menu_bar()
+    gui_builder.build_chapters_panel()
+    gui_builder.build_player_control_panel()
+    return gui_builder.chapters_gui_window
 
 
 class PlayerConnectionPopup(tk.Toplevel):
-    def __init__(self, master: tk.Tk, running_players: Dict):
+    def __init__(self, master: tk.Tk, running_players: Dict, set_cur_player: callable):
         super().__init__(master)
+        self._set_cur_player = set_cur_player
         self.title("Connect to Player")
         self._running_players = running_players
         if not self._running_players:
@@ -111,8 +233,10 @@ class PlayerConnectionPopup(tk.Toplevel):
             self._create_players_selection_panel(list(self._running_players.keys()))
         self.resizable(width=False, height=False)
         self.grid()
-        self.transient(master)  # set to be on top of the main window
-        self.grab_set()  # hijack all commands from the master (clicks on the main window are ignored)
+        # set to be on top of the main window
+        self.transient(master)
+        # hijack all commands from the master (clicks on the main window are ignored)
+        self.grab_set()
         master.wait_window(
             self
         )  # pause anything on the main window until this one closes
@@ -154,7 +278,6 @@ class PlayerConnectionPopup(tk.Toplevel):
         players_panel.grid_rowconfigure(0, weight=1)
         players_panel.grid(padx=0, pady=5)
 
-        # button_panel = ttk.LabelFrame(master=self)
         button_panel = tk.Frame(master=self)
         connect_button = ttk.Button(
             master=button_panel, text="Connect", command=self._handle_connect_command
@@ -174,7 +297,7 @@ class PlayerConnectionPopup(tk.Toplevel):
         new_player = None
         if fq_player_name:
             new_player = PlayerFactory.get_player(fq_player_name, player_name)
-            ChaptersGuiBuilder.current_player.set_player(new_player)
+            self._set_cur_player(new_player)
         self.destroy()
 
     def _handle_cancel_command(self):
@@ -184,93 +307,92 @@ class PlayerConnectionPopup(tk.Toplevel):
         self.destroy()
 
 
-def handle_connection_command():
-    running_player_names = PlayerFactory.get_running_player_names()
-    popup = PlayerConnectionPopup(
-        master=ChaptersGuiBuilder.main_window,
-        running_players=running_player_names,
-    )
+class View(Protocol):
+    def get_main_window(self) -> tk.Tk:
+        ...
+
+    def set_main_window_title(self, media_title: str):
+        ...
+
+    def set_chapters(
+        self, chapters: List[str], chapters_selection_action_functs: List[callable]
+    ):
+        ...
+
+    def show_display(self):
+        ...
 
 
-class ChaptersGuiBuilder:
-    main_window: tk.Tk = None
-    current_player: PlayerProxy = None
-
-    def __init__(self, chapters_filename: str, player: PlayerProxy):
-        self._player_control_panel: PlayerControlPanel = None
-        self._chapters_panel: ChaptersPanel = None
-        self._player = player
-        try:
-            self._chapters_title, self._chapters = mpris_helpers.load_chapters_file(
-                chapters_filename
-            )
-        except FileNotFoundError as fe:
-            logger.error(fe)
-            raise fe
-        self._main_window = ChaptersGui(self._chapters_title)
-        ChaptersGuiBuilder.main_window = self._main_window
-        ChaptersGuiBuilder.current_player = self._player
+class GuiController:
+    def __init__(
+        self, view: View, cur_player: PlayerProxy, app_gui_builder: AppGuiBuilder
+    ):
+        self._cur_player = cur_player
+        self._view = view
+        self._gui_builder = app_gui_builder
+        self._chapters_file_path = None
 
     @property
-    def chapters_gui_window(self) -> ChaptersGui:
-        return self._main_window
+    def cur_player(self):
+        return self._cur_player
+
+    def set_cur_player(self, player: PlayerProxy):
+        self._cur_player = player
 
     @property
-    def player(self) -> PlayerProxy:
-        return self._player
+    def set_chapters_position_funcs(self):
+        return self._chapter_position_funcs
 
-    def build_menu_bar(self):
-        menu_bar = tk.Menu(master=self._main_window)
-        self._main_window.config(menu=menu_bar)
+    @set_chapters_position_funcs.setter
+    def set_chapters_position_funcs(self, funcs_list: List[callable]):
+        self.set_chapters_position_funcs = funcs_list
 
-        connection_menu = tk.Menu(menu_bar, tearoff=0)
-        menu_bar.add_cascade(label="Connect", menu=connection_menu)
-        connection_menu.add_command(
-            label="Connect to ...", command=handle_connection_command
+    def chapters_listbox_selection_handler(self, event):
+        selection = event.widget.curselection()
+        if selection:
+            index = selection[0]
+            self._chapter_selection_action_functs[index]()
+
+    def set_player_position(self, position: str):
+        self._cur_player.set_position(mpris_helpers.to_microsecs(position))
+
+    def skip_player(self, offset: str, direction: Direction = Direction.FORWARD):
+        offset_with_dir = mpris_helpers.to_microsecs(offset) * direction
+        self._cur_player.seek(offset_with_dir)
+
+    def play_pause_player(self):
+        self._cur_player.play_pause()
+
+    def handle_connection_command(self):
+        running_player_names = PlayerFactory.get_running_player_names()
+        self.popup = PlayerConnectionPopup(
+            master=AppGuiBuilder.main_window,
+            running_players=running_player_names,
+            set_cur_player=self.set_cur_player,
         )
 
-    def build_chapters_panel(self):
-        listbox_items: List[str] = []
-        chapters_position_functions: List[callable] = []
-        chapter: str
-        position: str
-        for index, (chapter, position) in enumerate(self._chapters.items()):
-            listbox_items.append(f"{index+1}.    {chapter} ({position})")
-            chapters_position_functions.append(
-                partial(set_player_position, self._player, position)
-            )
-        self._chapters_panel = ChaptersPanel(
-            self._main_window,
-            chapters=listbox_items,
+    def handle_load_chapters_file_command(self):
+        if not self._chapters_file_path:
+            self._chapters_file_path = f"{Path.home()}/Videos"
+            if not Path(self._chapters_file_path).exists():
+                self._chapters_file_path = f"{Path.home()}"
+        chapters_filename = filedialog.askopenfile(
+            initialdir=self._chapters_file_path,
+            title="Select Chapters file",
+            filetypes=(("chapters files", "*.json"),),
+        )
+        if not chapters_filename:
+            return
+        self._chapters_file_path = str(Path(chapters_filename.name).parent)
+        (
+            chapters_title,
+            chapters_listbox_contents,
+            chapters_position_functions,
+        ) = self._gui_builder.get_chapters_listbox_contents(
+            chapters_filename.name, self.cur_player
+        )
+        self._view.set_main_window_title(chapters_title)
+        self._view.set_chapters(
+            chapters=chapters_listbox_contents,
             chapters_selection_action_functs=chapters_position_functions,
         )
-
-    def build_player_control_panel(self):
-        button_action_funcs = {
-            "Play/Pause": partial(play_pause_player, self._player),
-            ">": partial(skip_player, player=self._player, offset="00:00:10"),
-            ">>": partial(skip_player, player=self._player, offset="00:01:00"),
-            "<": partial(
-                skip_player,
-                player=self._player,
-                offset="00:00:10",
-                direction=Direction.REVERSE,
-            ),
-            "<<": partial(
-                skip_player,
-                player=self._player,
-                offset="00:01:00",
-                direction=Direction.REVERSE,
-            ),
-        }
-        self._player_control_panel = PlayerControlPanel(
-            self._main_window, button_action_funcs
-        )
-
-
-def build_gui_menu(chapters_filename: str, player: PlayerProxy) -> ChaptersGui:
-    gui_builder = ChaptersGuiBuilder(chapters_filename, player)
-    gui_builder.build_menu_bar()
-    gui_builder.build_chapters_panel()
-    gui_builder.build_player_control_panel()
-    return gui_builder.chapters_gui_window
