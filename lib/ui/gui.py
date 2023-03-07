@@ -3,6 +3,7 @@ import tkinter as tk
 from tkinter import filedialog
 from pathlib import Path
 from tkinter import ttk
+from . import ch_icon as icon
 from typing import Tuple, List, Dict, Protocol
 from functools import partial
 from .. import helpers as mpris_helpers
@@ -88,6 +89,7 @@ class AppMainWindow(tk.Tk):
     def __init__(self, media_title: str):
         super().__init__()
         self.title(media_title)
+        icon.apply_icon(self)
 
     @property
     def chapters_panel(self):
