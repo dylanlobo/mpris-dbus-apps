@@ -20,6 +20,9 @@ logger = logging.getLogger(__name__)
 
 def main():
     arguments = get_arguments()
+    if arguments.g:
+        launch_gui(arguments, None, None)
+        return
     player_instance_name = arguments.p
     # Retrieve list of running mpris enabled players
     running_players = PlayerFactory.get_running_player_names()
@@ -28,20 +31,17 @@ def main():
         return
 
     try:
-        if arguments.g:
-            launch_gui(arguments, None, None)
+        logger.info("Creating player")
+        if player_instance_name:
+            logger.info(f"Player name specified via -p is {player_instance_name}")
+            selected_player = mpris_helpers.get_player(
+                player_instance_name, running_players
+            )
         else:
-            logger.info("Creating player")
-            if player_instance_name:
-                logger.info(f"Player name specified via -p is {player_instance_name}")
-                selected_player = mpris_helpers.get_player(
-                    player_instance_name, running_players
-                )
-            else:
-                selected_player = mpris_helpers.get_selected_player(running_players)
-            logger.info("Created player")
-            chapters_file = arguments.f
-            launch_console(arguments, chapters_file, selected_player)
+            selected_player = mpris_helpers.get_selected_player(running_players)
+        logger.info("Created player")
+        chapters_file = arguments.f
+        launch_console(arguments, chapters_file, selected_player)
 
     except NoValidMprisPlayersError as err:
         print(err)
