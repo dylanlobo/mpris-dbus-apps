@@ -23,7 +23,8 @@ class ChaptersPanel(ttk.LabelFrame):
         super().__init__(master, text="Chapters")
         self._chapters = chapters
         self._chapter_selection_action_functs = chapters_selection_action_functs
-        lb_height = len(chapters) if len(chapters) < 10 else 10
+        # lb_height = len(chapters) if len(chapters) < 10 else 10
+        lb_height = 10
         lb = tk.Listbox(
             self, listvariable=tk.StringVar(value=chapters), width=60, height=lb_height
         )
