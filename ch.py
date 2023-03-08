@@ -1,4 +1,4 @@
-"""Creates a console or gui based menu of chapters, from a default file named ch.json in
+"""Creates a console or gui based menu of chapters, from a default file named ch.ch in
 the current directory. A chapters file may also be specified with the -f
 option. On startup, the application displays a list of running MPRIS enabled
 players to connect to. If only one player is running then it directly connects
@@ -21,7 +21,10 @@ logger = logging.getLogger(__name__)
 def main():
     arguments = get_arguments()
     if not arguments.c:
-        launch_gui(arguments)
+        if arguments.f:
+            launch_gui(chapters_file=arguments.f)
+        else:
+            launch_gui()
         return
     running_players = PlayerFactory.get_running_player_names()
     if len(running_players) == 0:
@@ -32,6 +35,8 @@ def main():
         selected_player = mpris_helpers.get_selected_player(running_players)
         logger.info("Created player")
         chapters_file = arguments.f
+        if not chapters_file:
+            raise FileNotFoundError()
         launch_console(arguments, chapters_file, selected_player)
 
     except NoValidMprisPlayersError as err:
@@ -46,7 +51,7 @@ def main():
     return
 
 
-def launch_gui(arguments, chapters_file=None, player=None):
+def launch_gui(chapters_file=None, player=None):
     gui_window = build_gui_menu(chapters_file, player)
     gui_window.show_display()
 
@@ -69,9 +74,8 @@ def get_arguments() -> argparse.Namespace:
             'Chapters is media player controller that provides "chapter" '
             "functionality to any media (audio/video) that is playing on a "
             "MPRIS enabled media player."
-            "Chapters utilises chapter infomation stored in a simple JSON "
-            "format file (defaults to ch.json in the current directory)"
-            "A JSON chapters file may also be specified via the -f option. "
+            "Chapters utilises chapter infomation stored in a simple JSON format file."
+            "The JSON chapters file can be specified at launch via the -f option. "
             "In gui mode (default mode), the application presents the user with "
             "a simple GUI interface. "
             "In console mode, on startup, the application displays a list of "
@@ -84,8 +88,8 @@ def get_arguments() -> argparse.Namespace:
         "-f",
         action="store",
         required=False,
-        default="ch.json",
-        help="The file name of the file containing the "
+        default=None,
+        help="The file name (.ch extension) of the file containing the "
         "chapter titles and their time offsets in a JSON document: "
         '{"title":"title name", "chapters":{"first chapter name" : "hh:mm:ss"'
         ',"second chapter name" : "hh:mm:ss"}}',

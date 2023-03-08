@@ -193,7 +193,7 @@ class AppGuiBuilder:
                 self._chapters_listbox_items,
                 self._chapters_position_functions,
             ) = self.get_chapters_listbox_contents(
-                self._chapters_filename, self._player
+                self._chapters_filename, PlayerProxy(None)
             )
         else:
             self._chapters_title = ""
@@ -393,7 +393,7 @@ class GuiController:
         chapters_filename = filedialog.askopenfile(
             initialdir=self._chapters_file_path,
             title="Select Chapters file",
-            filetypes=(("chapters files", "*.json"),),
+            filetypes=(("chapters files", "*.ch"),),
         )
         if not chapters_filename:
             return
