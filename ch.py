@@ -87,6 +87,7 @@ def get_arguments() -> argparse.Namespace:
     parser.add_argument(
         "-f",
         action="store",
+        nargs="?",
         required=False,
         default=None,
         help="The file name (.ch extension) of the file containing the "
