@@ -20,41 +20,33 @@ logger = logging.getLogger(__name__)
 
 def main():
     arguments = get_arguments()
-    if arguments.g:
-        launch_gui(arguments, None, None)
+    if not arguments.c:
+        launch_gui(arguments)
         return
-    player_instance_name = arguments.p
-    # Retrieve list of running mpris enabled players
     running_players = PlayerFactory.get_running_player_names()
     if len(running_players) == 0:
         print("No mpris enabled players are running.")
         return
-
     try:
         logger.info("Creating player")
-        if player_instance_name:
-            logger.info(f"Player name specified via -p is {player_instance_name}")
-            selected_player = mpris_helpers.get_player(
-                player_instance_name, running_players
-            )
-        else:
-            selected_player = mpris_helpers.get_selected_player(running_players)
+        selected_player = mpris_helpers.get_selected_player(running_players)
         logger.info("Created player")
         chapters_file = arguments.f
         launch_console(arguments, chapters_file, selected_player)
 
     except NoValidMprisPlayersError as err:
         print(err)
-    except FileNotFoundError as fe:
+    except FileNotFoundError:
         print(
-            "Chapters file not found. Use -h option to learn how to provide a chapters file."
+            "Chapters file not found. Use -h option to learn how to provide a chapters"
+            " file."
         )
     #    except Exception as err:
     #        logger.error(err)
     return
 
 
-def launch_gui(arguments, chapters_file, player):
+def launch_gui(arguments, chapters_file=None, player=None):
     gui_window = build_gui_menu(chapters_file, player)
     gui_window.show_display()
 
@@ -64,7 +56,7 @@ def launch_console(arguments, chapters_file, selected_player):
         chapters_file=chapters_file,
         player=selected_player,
         reload_option=arguments.r,
-        player_controls_option=arguments.c,
+        player_controls_option=arguments.p,
     )
     chapters_console_menu.display_menu()
     if chapters_console_menu.reload_chapters_on_exit:
@@ -74,11 +66,18 @@ def launch_console(arguments, chapters_file, selected_player):
 def get_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Creates a console based menu of chapters,"
-            " from a default file named ch.json in the current directory. "
-            "A chapters file may also be specified with the -f option. "
-            "On startup, the application displays a list of running MPRIS enabled players to connect to. "
-            "If only one player is running then it directly connects to the running player."
+            'Chapters is media player controller that provides "chapter" '
+            "functionality to any media (audio/video) that is playing on a "
+            "MPRIS enabled media player."
+            "Chapters utilises chapter infomation stored in a simple JSON "
+            "format file (defaults to ch.json in the current directory)"
+            "A JSON chapters file may also be specified via the -f option. "
+            "In gui mode (default mode), the application presents the user with "
+            "a simple GUI interface. "
+            "In console mode, on startup, the application displays a list of "
+            "running MPRIS enabled players to connect to. "
+            "If only one player is running then it directly connects to the running "
+            "player."
         )
     )
     parser.add_argument(
@@ -88,13 +87,8 @@ def get_arguments() -> argparse.Namespace:
         default="ch.json",
         help="The file name of the file containing the "
         "chapter titles and their time offsets in a JSON document: "
-        '{"title":"title name", "chapters":{"first chapter name" : "hh:mm:ss","second chapter name" : "hh:mm:ss"}}',
-    )
-    parser.add_argument(
-        "-p",
-        action="store",
-        required=False,
-        help="The name of the player instance to connect to.",
+        '{"title":"title name", "chapters":{"first chapter name" : "hh:mm:ss"'
+        ',"second chapter name" : "hh:mm:ss"}}',
     )
     parser.add_argument(
         "-r",
@@ -104,18 +98,19 @@ def get_arguments() -> argparse.Namespace:
         help="Include a option to reload the chapters file. Only for console mode.",
     )
     parser.add_argument(
+        "-p",
+        action="store_true",
+        required=False,
+        default=False,
+        help="Include a option to control the player via a sub-menu."
+        "Only for console mode.",
+    )
+    parser.add_argument(
         "-c",
         action="store_true",
         required=False,
         default=False,
-        help="Include a option to control the player via a sub-menu. Only for console mode.",
-    )
-    parser.add_argument(
-        "-g",
-        action="store_true",
-        required=False,
-        default=False,
-        help="Launch graphical user interface.",
+        help="Launch in console mode (terminal interface).",
     )
     arguments = parser.parse_args()
     return arguments

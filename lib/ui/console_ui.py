@@ -1,12 +1,9 @@
-import json
 import logging
-import os
 
 from consolemenu import ConsoleMenu
 from consolemenu.items import FunctionItem
 from consolemenu.items import SubmenuItem
-from json import JSONDecodeError
-from typing import Any, Tuple, Dict
+from typing import Any
 from ..dbus_mpris.core import Player
 from .. import helpers as mpris_helpers
 
@@ -119,13 +116,13 @@ class ChaptersMenuConsoleBuilder:
 
 
 def build_console_menu(
-        chapters_file: str,
-        player: Player,
-        reload_option: bool,
-        player_controls_option: bool,
+    chapters_file: str,
+    player: Player,
+    reload_option: bool,
+    player_controls_option: bool,
 ) -> ChaptersMenuConsole:
-    """Orchestrates the building of the console menu by using the capabilities of the ChaptersMenuConsoleBuilder.
-    This is the Director in the Builder Pattern"""
+    """Orchestrates the building of the console menu by using the capabilities of the
+    ChaptersMenuConsoleBuilder. This is the Director in the Builder Pattern"""
 
     console_builder = ChaptersMenuConsoleBuilder(chapters_file, player)
     if reload_option:
