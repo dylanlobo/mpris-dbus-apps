@@ -20,20 +20,29 @@ logger = logging.getLogger(__name__)
 
 def main():
     arguments = get_arguments()
-    if not arguments.c:
-        if arguments.f:
-            launch_gui(chapters_file=arguments.f)
-        else:
-            launch_gui()
-        return
     running_players = PlayerFactory.get_running_player_names()
+    selected_player = None
+    chapters_file = arguments.f
+    if len(running_players) == 1:
+        player_names = list(running_players.keys())
+        selected_player_name = player_names[0]
+        logger.debug("Creating player")
+        selected_player = mpris_helpers.get_player(
+            selected_player_name, running_players
+        )
+        logger.debug("Created player")
+    if not arguments.c:
+        launch_gui(chapters_file, selected_player)
+        return
+
     if len(running_players) == 0:
         print("No mpris enabled players are running.")
         return
     try:
-        logger.info("Creating player")
-        selected_player = mpris_helpers.get_selected_player(running_players)
-        logger.info("Created player")
+        if not selected_player:
+            logger.debug("Creating player")
+            selected_player = mpris_helpers.get_selected_player(running_players)
+            logger.debug("Created player")
         chapters_file = arguments.f
         if not chapters_file:
             raise FileNotFoundError()
