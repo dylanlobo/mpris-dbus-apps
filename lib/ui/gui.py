@@ -24,7 +24,6 @@ class ChaptersPanel(ttk.LabelFrame):
         super().__init__(master, text="Chapters")
         self._chapters = chapters
         self._chapter_selection_action_functs = chapters_selection_action_functs
-        # lb_height = len(chapters) if len(chapters) < 10 else 10
         lb_height = 10
         lb = tk.Listbox(
             self, listvariable=tk.StringVar(value=chapters), width=60, height=lb_height
@@ -42,12 +41,14 @@ class ChaptersPanel(ttk.LabelFrame):
         self.grid_rowconfigure(0, weight=1)
         self.grid()
 
-    def set_chapters(
-        self, chapters: List[str], chapters_selection_action_functs: List[callable]
-    ):
-        self._chapter_selection_action_functs = chapters_selection_action_functs
+    def set_chapters(self, chapters: List[str]):
         self._chapters_lb.delete(0, tk.END)
         self._chapters_lb.insert(tk.END, *chapters)
+
+    def bind_chapters_selection_commands(
+        self, chapters_selection_action_functs: List[callable]
+    ):
+        self._chapter_selection_action_functs = chapters_selection_action_functs
 
     def lb_selection_handler(self, event):
         selection = event.widget.curselection()
@@ -57,29 +58,47 @@ class ChaptersPanel(ttk.LabelFrame):
 
 
 class PlayerControlPanel(ttk.LabelFrame):
-    def __init__(self, master: tk.Tk, player_controls_funcs: Dict[str, callable]):
+    def __init__(self, master: tk.Tk):
         super().__init__(master, text="Player Controls")
-        self.pause_play_button = ttk.Button(
-            self, text="Play/Pause", command=player_controls_funcs["Play/Pause"]
-        )
-        self.forward_30sec_button = ttk.Button(
-            self, text=">", command=player_controls_funcs[">"]
-        )
-        self.forward_1min_button = ttk.Button(
-            self, text=">>", command=player_controls_funcs[">>"]
-        )
-        self.backward_30sec_button = ttk.Button(
-            self, text="<", command=player_controls_funcs["<"]
-        )
-        self.backward_1min_button = ttk.Button(
-            self, text="<<", command=player_controls_funcs["<<"]
-        )
-        self.backward_1min_button.grid(row=0, column=1, padx=10, pady=10)
-        self.backward_30sec_button.grid(row=0, column=2, padx=10)
-        self.pause_play_button.grid(row=0, column=3, padx=10)
-        self.forward_30sec_button.grid(row=0, column=4, padx=10)
-        self.forward_1min_button.grid(row=0, column=5, padx=10)
+        self._buttons = []
+        self._buttons.append(ttk.Button(self, text="<<"))
+        self._buttons.append(ttk.Button(self, text="<"))
+        self._buttons.append(ttk.Button(self, text="Play/Pause"))
+        self._buttons.append(ttk.Button(self, text=">"))
+        self._buttons.append(ttk.Button(self, text=">>"))
+        for i in range(5):
+            self._buttons[i].grid(row=0, column=(i + 1), padx=10, pady=10)
+
         self.grid(padx=10, pady=10)
+
+    def bind_player_controls_commands(self, player_controls_funcs: Dict[str, callable]):
+        for button in self._buttons:
+            button_name = button.cget("text")
+            button.configure(command=player_controls_funcs[button_name])
+
+
+class AppMenuBar(tk.Menu):
+    def __init__(self, main_window: tk.Tk):
+        super().__init__()
+        self._main_window = main_window
+        self._main_window.config(menu=self)
+
+        self._connection_menu = tk.Menu(self, tearoff=0)
+        self.add_cascade(label="Connect", menu=self._connection_menu)
+
+        self._chapters_menu = tk.Menu(self, tearoff=0)
+        self.add_cascade(label="Load Chapters", menu=self._chapters_menu)
+
+    def bind_connect_to_player_command(self, connect_player_command: callable):
+        self._connection_menu.add_command(
+            label="Connect to player ...",
+            command=connect_player_command,
+        )
+
+    def bind_load_chapters_command(self, load_chapters_file_command: callable):
+        self._chapters_menu.add_command(
+            label="Select chapters file ...", command=load_chapters_file_command
+        )
 
 
 class AppMainWindow(tk.Tk):
@@ -91,6 +110,14 @@ class AppMainWindow(tk.Tk):
         self.title(media_title)
         icon.apply_icon(self)
         self.wm_title()
+
+    @property
+    def menu_bar(self):
+        return self._menu_bar
+
+    @menu_bar.setter
+    def menu_bar(self, menu_bar: AppMenuBar):
+        self._menu_bar = menu_bar
 
     @property
     def chapters_panel(self):
@@ -116,13 +143,24 @@ class AppMainWindow(tk.Tk):
     def set_main_window_title(self, media_title: str):
         self.title(media_title)
 
-    def set_chapters(
-        self, chapters: List[str], chapters_selection_action_functs: List[callable]
+    def set_chapters(self, chapters: List[str]):
+        self._chapters_panel.set_chapters(chapters=chapters)
+
+    def bind_chapters_selection_commands(
+        self, chapters_selection_action_functs: List[callable]
     ):
-        self._chapters_panel.set_chapters(
-            chapters=chapters,
-            chapters_selection_action_functs=chapters_selection_action_functs,
+        self._chapters_panel.bind_chapters_selection_commands(
+            chapters_selection_action_functs=chapters_selection_action_functs
         )
+
+    def bind_player_controls_commands(self, player_controls_funcs: Dict[str, callable]):
+        self._player_control_panel.bind_player_controls_commands(player_controls_funcs)
+
+    def bind_connect_to_player_command(self, connect_player_command: callable):
+        self._menu_bar.bind_connect_to_player_command(connect_player_command)
+
+    def bind_load_chapters_command(self, load_chapters_file_command: callable):
+        self._menu_bar.bind_load_chapters_command(load_chapters_file_command)
 
 
 class AppGuiBuilder:
@@ -146,22 +184,13 @@ class AppGuiBuilder:
         return self._player
 
     def build_menu_bar(self):
-        menu_bar = tk.Menu(master=self._main_window)
-        self._main_window.config(menu=menu_bar)
-
-        connection_menu = tk.Menu(menu_bar, tearoff=0)
-        menu_bar.add_cascade(label="Connect", menu=connection_menu)
-        connection_menu.add_command(
-            label="Connect to player ...",
-            command=self._gui_controller.handle_connection_command,
+        self._main_window.menu_bar = AppMenuBar(self._main_window)
+        self._main_window.menu_bar.bind_connect_to_player_command(
+            self._gui_controller.handle_connection_command
         )
-
-        chapters_menu = tk.Menu(menu_bar, tearoff=0)
-        chapters_menu.add_command(
-            label="Select chapters file ...",
-            command=self._gui_controller.handle_load_chapters_file_command,
+        self._main_window.menu_bar.bind_load_chapters_command(
+            self._gui_controller.handle_load_chapters_file_command
         )
-        menu_bar.add_cascade(label="Load Chapters", menu=chapters_menu)
 
     def get_chapters_listbox_contents(
         self, chapters_filename: str, player: PlayerProxy
@@ -222,9 +251,8 @@ class AppGuiBuilder:
                 direction=Direction.REVERSE,
             ),
         }
-        self._main_window.player_control_panel = PlayerControlPanel(
-            self._main_window, button_action_funcs
-        )
+        self._main_window.player_control_panel = PlayerControlPanel(self._main_window)
+        self._main_window.bind_player_controls_commands(button_action_funcs)
 
 
 def build_gui_menu(chapters_filename: str, player: PlayerProxy) -> AppMainWindow:
@@ -328,9 +356,21 @@ class View(Protocol):
     def set_main_window_title(self, media_title: str):
         ...
 
-    def set_chapters(
-        self, chapters: List[str], chapters_selection_action_functs: List[callable]
+    def set_chapters(self, chapters: List[str]):
+        ...
+
+    def bind_chapters_selection_commands(
+        self, chapters_selection_action_functs: List[callable]
     ):
+        ...
+
+    def bind_player_controls_commands(self, player_controls_funcs: Dict[str, callable]):
+        ...
+
+    def bind_connect_to_player_command(self, connect_player_command: callable):
+        ...
+
+    def bind_load_chapters_command(self, load_chapters_file_command: callable):
         ...
 
     def show_display(self):
@@ -387,9 +427,11 @@ class GuiController:
 
     def handle_load_chapters_file_command(self):
         if not self._chapters_file_path:
+            self._chapters_file_path = f"{Path.home()}/Videos/Computing"
+        if not Path(self._chapters_file_path).exists():
             self._chapters_file_path = f"{Path.home()}/Videos"
-            if not Path(self._chapters_file_path).exists():
-                self._chapters_file_path = f"{Path.home()}"
+        if not Path(self._chapters_file_path).exists():
+            self._chapters_file_path = f"{Path.home()}"
         chapters_filename = filedialog.askopenfile(
             initialdir=self._chapters_file_path,
             title="Select Chapters file",
@@ -406,7 +448,7 @@ class GuiController:
             chapters_filename.name, self.cur_player
         )
         self._view.set_main_window_title(chapters_title)
-        self._view.set_chapters(
-            chapters=chapters_listbox_contents,
-            chapters_selection_action_functs=chapters_position_functions,
+        self._view.set_chapters(chapters=chapters_listbox_contents)
+        self._view.bind_chapters_selection_commands(
+            chapters_selection_action_functs=chapters_position_functions
         )
