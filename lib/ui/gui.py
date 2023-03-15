@@ -189,13 +189,12 @@ class AppMainWindow(tk.Tk):
             self._chapters_file_path = str(Path(chapters_filename.name).parent)
         return chapters_filename
 
-    def request_player_selection(self, set_cur_player_func: callable):
+    def select_new_player(self) -> PlayerProxy:
         running_player_names = PlayerFactory.get_running_player_names()
         self.popup = PlayerConnectionPopup(
-            master=self,
-            running_players=running_player_names,
-            set_cur_player=set_cur_player_func,
+            master=self, running_players=running_player_names
         )
+        return self.popup.select_new_player()
 
 
 class AppGuiBuilder:
@@ -295,28 +294,33 @@ def build_gui_menu(chapters_filename: str, player: PlayerProxy) -> AppMainWindow
     return gui_builder.chapters_gui_window
 
 
-class PlayerConnectionPopup(tk.Toplevel):
-    def __init__(self, master: tk.Tk, running_players: Dict, set_cur_player: callable):
-        super().__init__(master)
-        self._set_cur_player = set_cur_player
-        self.title("Connect to Player")
-        self._running_players = running_players
+class PlayerConnectionPopup:
+    def __init__(self, master: tk.Tk, running_players: Dict):
+        self._master: tk.Tk = master
+        self._running_players: Dict = running_players
+        self._new_player: PlayerProxy = PlayerProxy(None)
+
+    def select_new_player(self) -> PlayerProxy:
+        self._popup = tk.Toplevel(self._master)
+        self._popup.title("Connect to Player")
+        self._running_players = self._running_players
         if not self._running_players:
             self._create_error_message_panel()
         else:
             self._create_players_selection_panel(list(self._running_players.keys()))
-        self.resizable(width=False, height=False)
-        self.grid()
+        self._popup.resizable(width=False, height=False)
+        self._popup.grid()
         # set to be on top of the main window
-        self.transient(master)
+        self._popup.transient(self._master)
         # hijack all commands from the master (clicks on the main window are ignored)
-        self.grab_set()
-        master.wait_window(
-            self
+        self._popup.grab_set()
+        self._master.wait_window(
+            self._popup
         )  # pause anything on the main window until this one closes
+        return self._new_player
 
     def _create_error_message_panel(self):
-        message_panel = ttk.Frame(master=self)
+        message_panel = ttk.Frame(master=self._popup)
         message = ttk.Label(
             master=message_panel,
             text="No MPRIS enabled media players are currently running!",
@@ -329,7 +333,7 @@ class PlayerConnectionPopup(tk.Toplevel):
         message_panel.grid()
 
     def _create_players_selection_panel(self, player_names: List):
-        players_panel = ttk.LabelFrame(master=self, text="Players")
+        players_panel = ttk.LabelFrame(master=self._popup, text="Players")
         lb_height = 5
         self._players_listbox = tk.Listbox(
             master=players_panel,
@@ -352,7 +356,7 @@ class PlayerConnectionPopup(tk.Toplevel):
         players_panel.grid_rowconfigure(0, weight=1)
         players_panel.grid(padx=0, pady=5)
 
-        button_panel = tk.Frame(master=self)
+        button_panel = tk.Frame(master=self._popup)
         connect_button = ttk.Button(
             master=button_panel, text="Connect", command=self._handle_connect_command
         )
@@ -368,14 +372,12 @@ class PlayerConnectionPopup(tk.Toplevel):
     def _handle_connect_command(self):
         player_name = self._players_listbox.get(tk.ACTIVE)
         fq_player_name = self._running_players[player_name]
-        new_player = None
         if fq_player_name:
-            new_player = PlayerFactory.get_player(fq_player_name, player_name)
-            self._set_cur_player(new_player)
-        self.destroy()
+            self._new_player = PlayerFactory.get_player(fq_player_name, player_name)
+        self._popup.destroy()
 
     def _handle_cancel_command(self):
-        self.destroy()
+        self._popup.destroy()
 
     def _handle_ok_command(self):
-        self.destroy()
+        self._popup.destroy()

@@ -41,7 +41,7 @@ class AppInterface(Protocol):
     def bind_connect_to_player_command(self, connect_player_command: callable):
         ...
 
-    def request_player_selection(self, set_cur_player_func: callable):
+    def select_new_player(self) -> PlayerProxy:
         ...
 
     def bind_load_chapters_command(self, load_chapters_file_command: callable):
@@ -95,7 +95,8 @@ class GuiController:
         self._cur_player.play_pause()
 
     def handle_connection_command(self):
-        self._view.request_player_selection(set_cur_player_func=self.set_cur_player)
+        new_player = self._view.select_new_player()
+        self.set_cur_player(new_player)
 
     def handle_load_chapters_file_command(self):
         chapters_filename = self._view.request_chapters_filename()
