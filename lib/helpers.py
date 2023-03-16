@@ -34,7 +34,8 @@ def get_player(player_name: str, running_players: Dict[str, str]) -> Player:
         Eg. rhythmbox
     :param running_players: a dictionary containing running player names.
         The key is the unqualified player instance name and the value is
-        the fully qualified player name.  Eg. {"rhythmbox","org.mpris.MediaPlayer2.rhythmbox"}
+        the fully qualified player name.
+        Eg. {"rhythmbox","org.mpris.MediaPlayer2.rhythmbox"}
     :returns: a dbus.Interface("org.mpris.MediaPlayer2.Player") instance of the
         specified player instance name.
     """
@@ -106,7 +107,7 @@ def load_chapters_file(chapters_file: str) -> Tuple[str, Dict[str, str]]:
             json_dict = json.load(f)
     except json.JSONDecodeError as e:
         logger.critical(f"The file {chapters_file} is not a valid JSON document. {e}")
-        raise ValueError(f"The file {chapters_file} is not a valid JSON document.")
+        raise ValueError(f"The file {chapters_file} is not a valid JSON document.{e}")
 
     if json_dict["title"]:
         title = json_dict["title"]
@@ -142,7 +143,8 @@ def get_selected_player(running_players: Dict[str, str]) -> Player:
     while not is_player_useable(player):
         player_names.remove(selected_player_name)
         if not player_names:
-            msg = f"{selected_player_name} is not useable. No other mpris enabled players are currently running."
+            msg = f"{selected_player_name} is not useable. \
+            No other mpris enabled players are currently running."
             logger.error(msg)
             raise NoValidMprisPlayersError(msg)
 
@@ -159,7 +161,8 @@ def user_try_another_player() -> bool:
     selection is not valid and requesting the user to choose a different player"""
     while True:
         answer = input(
-            "The selected player does not implement required MPRIS functionality. \n Select another player? Yes[y] or "
+            "The selected player does not implement required MPRIS functionality.\n \
+                Select another player? Yes[y] or "
             "No[n] default[y]: "
         )
         answer = answer.lower()
@@ -173,7 +176,8 @@ def user_select_player(player_names: List[str]) -> str:
     """Presents the user with an interactive console to select a mpris enabled player
     instance.
 
-    :param: player_names -- a list containing the names of the mpris enabled player instances.
+    :param: player_names -- a list containing the names of the mpris enabled player \
+        instances.
     :returns: a string containing the player name selected by the user"""
 
     if not isinstance(player_names, list):

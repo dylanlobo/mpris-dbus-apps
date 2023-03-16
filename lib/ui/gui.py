@@ -228,8 +228,8 @@ class AppGuiBuilder:
     def get_chapters_listbox_contents(
         self, chapters_filename: str, player: PlayerProxy
     ) -> Tuple[str, Dict[str, str], List[callable]]:
-        chapters_title: str = None
-        chapters: Dict[str, str] = None
+        chapters_title: str = ""
+        chapters: Dict[str, str] = {}
         try:
             chapters_title, chapters = mpris_helpers.load_chapters_file(
                 chapters_filename
@@ -237,6 +237,8 @@ class AppGuiBuilder:
         except FileNotFoundError as fe:
             logger.error(fe)
             raise fe
+        except ValueError as ve:
+            logger.error(ve)
         listbox_items: List[str] = []
         chapters_position_functions: List[callable] = []
         chapter: str
