@@ -62,13 +62,15 @@ class PlayerControlPanel(ttk.LabelFrame):
     def __init__(self, master: tk.Tk):
         super().__init__(master, text="Player Controls")
         self._buttons = []
-        self._buttons.append(ttk.Button(self, text="<<"))
-        self._buttons.append(ttk.Button(self, text="<"))
+        self._buttons.append(ttk.Button(self, text="<<<", width=6))
+        self._buttons.append(ttk.Button(self, text="<<", width=6))
+        self._buttons.append(ttk.Button(self, text="<", width=6))
         self._buttons.append(ttk.Button(self, text="Play/Pause"))
-        self._buttons.append(ttk.Button(self, text=">"))
-        self._buttons.append(ttk.Button(self, text=">>"))
-        for i in range(5):
-            self._buttons[i].grid(row=0, column=(i + 1), padx=10, pady=10)
+        self._buttons.append(ttk.Button(self, text=">", width=6))
+        self._buttons.append(ttk.Button(self, text=">>", width=6))
+        self._buttons.append(ttk.Button(self, text=">>>", width=6))
+        for i in range(len(self._buttons)):
+            self._buttons[i].grid(row=0, column=(i + 1), padx=5, pady=10)
 
         self.grid(padx=10, pady=10)
 
@@ -272,14 +274,20 @@ class AppGuiBuilder:
     def create_player_control_panel_bindings(self):
         button_action_funcs = {
             "Play/Pause": partial(self._gui_controller.play_pause_player),
-            ">": partial(self._gui_controller.skip_player, offset="00:00:10"),
-            ">>": partial(self._gui_controller.skip_player, offset="00:01:00"),
+            ">": partial(self._gui_controller.skip_player, offset="00:00:05"),
+            ">>": partial(self._gui_controller.skip_player, offset="00:00:10"),
+            ">>>": partial(self._gui_controller.skip_player, offset="00:01:00"),
             "<": partial(
+                self._gui_controller.skip_player,
+                offset="00:00:05",
+                direction=Direction.REVERSE,
+            ),
+            "<<": partial(
                 self._gui_controller.skip_player,
                 offset="00:00:10",
                 direction=Direction.REVERSE,
             ),
-            "<<": partial(
+            "<<<": partial(
                 self._gui_controller.skip_player,
                 offset="00:01:00",
                 direction=Direction.REVERSE,
