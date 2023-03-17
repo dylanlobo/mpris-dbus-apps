@@ -14,7 +14,7 @@ from lib.ui.console_ui import build_console_menu
 from lib.ui.gui import build_gui_menu
 
 # logging.basicConfig(filename="log.txt", filemode="w", level=logging.DEBUG)
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
 
 
