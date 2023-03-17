@@ -308,7 +308,7 @@ class PlayerConnectionPopup:
     def __init__(self, master: tk.Tk, running_players: Dict):
         self._master: tk.Tk = master
         self._running_players: Dict = running_players
-        self._new_player: PlayerProxy = PlayerProxy(None)
+        self._new_player: PlayerProxy = None
 
     def select_new_player(self) -> PlayerProxy:
         self._popup = tk.Toplevel(self._master)
@@ -387,6 +387,7 @@ class PlayerConnectionPopup:
         self._popup.destroy()
 
     def _handle_cancel_command(self):
+        self._new_player = None
         self._popup.destroy()
 
     def _handle_ok_command(self):

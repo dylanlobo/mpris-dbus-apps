@@ -96,7 +96,8 @@ class GuiController:
 
     def handle_connection_command(self):
         new_player = self._view.select_new_player()
-        self.set_cur_player(new_player)
+        if new_player:
+            self.set_cur_player(new_player)
 
     def handle_load_chapters_file_command(self):
         chapters_filename = self._view.request_chapters_filename()
