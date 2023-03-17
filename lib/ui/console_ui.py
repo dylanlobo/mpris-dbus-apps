@@ -7,7 +7,6 @@ from typing import Any
 from ..dbus_mpris.core import Player
 from .. import helpers as mpris_helpers
 
-logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
 
 

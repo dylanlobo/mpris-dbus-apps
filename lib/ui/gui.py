@@ -11,7 +11,6 @@ from ..helpers import Direction
 from lib.dbus_mpris.core import PlayerProxy, PlayerFactory
 from .gui_controller import GuiController, AppInterface
 
-logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
 
 
