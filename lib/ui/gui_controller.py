@@ -1,16 +1,14 @@
 from typing import Tuple, List, Dict, Protocol
-from .. import helpers as mpris_helpers
-from ..helpers import Direction
+from .. import helpers
 from lib.dbus_mpris.core import PlayerProxy
+import logging
+from functools import partial
+
+logger = logging.getLogger(__name__)
 
 
 class AppGuiBuilderInterface(Protocol):
     def create_menu_bar_bindings(self):
-        ...
-
-    def get_chapters_listbox_contents(
-        self, chapters_filename: str, player: PlayerProxy
-    ) -> Tuple[str, Dict[str, str], List[callable]]:
         ...
 
     def create_chapters_panel_bindings(self):
@@ -25,6 +23,9 @@ class AppInterface(Protocol):
         ...
 
     def request_chapters_filename(self) -> str:
+        ...
+
+    def get_youtube_video(self) -> str:
         ...
 
     def set_chapters(self, chapters: List[str]):
@@ -85,10 +86,12 @@ class GuiController:
             self._chapter_selection_action_functs[index]()
 
     def set_player_position(self, position: str):
-        self._cur_player.set_position(mpris_helpers.to_microsecs(position))
+        self._cur_player.set_position(helpers.to_microsecs(position))
 
-    def skip_player(self, offset: str, direction: Direction = Direction.FORWARD):
-        offset_with_dir = mpris_helpers.to_microsecs(offset) * direction
+    def skip_player(
+        self, offset: str, direction: helpers.Direction = helpers.Direction.FORWARD
+    ):
+        offset_with_dir = helpers.to_microsecs(offset) * direction
         self._cur_player.seek(offset_with_dir)
 
     def play_pause_player(self):
@@ -99,19 +102,64 @@ class GuiController:
         if new_player:
             self.set_cur_player(new_player)
 
+    def get_chapters_listbox_contents(
+        self, chapters: Dict[str, str]
+    ) -> Tuple[str, Dict[str, str], List[callable]]:
+        listbox_items: List[str] = []
+        chapters_position_functions: List[callable] = []
+        chapter: str
+        position: str
+        if chapters:
+            for index, (chapter, position) in enumerate(chapters.items()):
+                listbox_items.append(f"{index+1}.    {chapter} ({position})")
+                chapters_position_functions.append(
+                    partial(self.set_player_position, position)
+                )
+        return (listbox_items, chapters_position_functions)
+
     def handle_load_chapters_file_command(self):
+        chapters_title: str = ""
+        chapters: Dict[str, str] = {}
         chapters_filename = self._view.request_chapters_filename()
         if not chapters_filename:
             return
+        try:
+            chapters_title, chapters = helpers.load_chapters_file(chapters_filename)
+        except FileNotFoundError as fe:
+            logger.error(fe)
+            # TODO Implement and make call to view object to display error
+            # message popup before returning
+        except ValueError as ve:
+            logger.error(ve)
+            # TODO Implement and make call to view object to display error
+            # message popup before returning
         (
-            chapters_title,
-            chapters_listbox_contents,
+            listbox_items,
             chapters_position_functions,
-        ) = self._gui_builder.get_chapters_listbox_contents(
-            chapters_filename.name, self.cur_player
-        )
+        ) = self.get_chapters_listbox_contents(chapters)
         self._view.set_main_window_title(chapters_title)
-        self._view.set_chapters(chapters=chapters_listbox_contents)
+        self._view.set_chapters(chapters=listbox_items)
+        self._view.bind_chapters_selection_commands(
+            chapters_selection_action_functs=chapters_position_functions
+        )
+
+    def handle_load_chapters_from_youtube(self):
+        video_name = self._view.get_youtube_video()
+        if not video_name:
+            return
+        video_name = video_name.strip()
+        if not video_name:
+            return
+
+        (chapters_title, chapters) = helpers.load_chapters_from_youtube(
+            video=video_name
+        )
+        (
+            listbox_items,
+            chapters_position_functions,
+        ) = self.get_chapters_listbox_contents(chapters)
+        self._view.set_main_window_title(chapters_title)
+        self._view.set_chapters(chapters=listbox_items)
         self._view.bind_chapters_selection_commands(
             chapters_selection_action_functs=chapters_position_functions
         )

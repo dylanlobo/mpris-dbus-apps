@@ -4,9 +4,8 @@ from tkinter import filedialog
 from pathlib import Path
 from tkinter import ttk
 from . import ch_icon as icon
-from typing import Tuple, List, Dict
+from typing import List, Dict
 from functools import partial
-from .. import helpers as mpris_helpers
 from ..helpers import Direction
 from lib.dbus_mpris.core import PlayerProxy, PlayerFactory
 from .gui_controller import GuiController, AppInterface
@@ -97,9 +96,17 @@ class AppMenuBar(tk.Menu):
             command=connect_player_command,
         )
 
-    def bind_load_chapters_command(self, load_chapters_file_command: callable):
+    def bind_load_chapters_file_command(self, load_chapters_file_command: callable):
         self._chapters_menu.add_command(
-            label="Select chapters file ...", command=load_chapters_file_command
+            label="Load chapters file ...", command=load_chapters_file_command
+        )
+
+    def bind_load_chapters_from_youtube_command(
+        self, load_chapters_from_youtube_command: callable
+    ):
+        self._chapters_menu.add_command(
+            label="Load chapters from Youtube ...",
+            command=load_chapters_from_youtube_command,
         )
 
 
@@ -171,8 +178,15 @@ class AppMainWindow(tk.Tk):
     def bind_connect_to_player_command(self, connect_player_command: callable):
         self._menu_bar.bind_connect_to_player_command(connect_player_command)
 
-    def bind_load_chapters_command(self, load_chapters_file_command: callable):
-        self._menu_bar.bind_load_chapters_command(load_chapters_file_command)
+    def bind_load_chapters_file_command(self, load_chapters_file_command: callable):
+        self._menu_bar.bind_load_chapters_file_command(load_chapters_file_command)
+
+    def bind_load_chapters_from_youtube_command(
+        self, load_chapters_from_youtube_command: callable
+    ):
+        self._menu_bar.bind_load_chapters_from_youtube_command(
+            load_chapters_from_youtube_command
+        )
 
     def request_chapters_filename(self) -> str:
         if not self._chapters_file_path:
@@ -181,13 +195,15 @@ class AppMainWindow(tk.Tk):
             self._chapters_file_path = f"{Path.home()}/Videos"
         if not Path(self._chapters_file_path).exists():
             self._chapters_file_path = f"{Path.home()}"
-        chapters_filename = filedialog.askopenfile(
+        selected_chapters_filename = filedialog.askopenfile(
             initialdir=self._chapters_file_path,
             title="Select Chapters file",
             filetypes=(("chapters files", "*.ch"),),
         )
-        if chapters_filename:
-            self._chapters_file_path = str(Path(chapters_filename.name).parent)
+        chapters_filename = ""
+        if selected_chapters_filename:
+            chapters_filename = selected_chapters_filename.name
+            self._chapters_file_path = str(Path(chapters_filename).parent)
         return chapters_filename
 
     def select_new_player(self) -> PlayerProxy:
@@ -196,6 +212,11 @@ class AppMainWindow(tk.Tk):
             master=self, running_players=running_player_names
         )
         return self.popup.select_new_player()
+
+    def get_youtube_video(self) -> str:
+        self._yt_video_popup = YoutubeChaptersPopup(master=self)
+        video = self._yt_video_popup.get_video()
+        return video
 
 
 class AppGuiBuilder:
@@ -222,34 +243,12 @@ class AppGuiBuilder:
         self._view.menu_bar.bind_connect_to_player_command(
             self._gui_controller.handle_connection_command
         )
-        self._view.menu_bar.bind_load_chapters_command(
+        self._view.menu_bar.bind_load_chapters_file_command(
             self._gui_controller.handle_load_chapters_file_command
         )
-
-    def get_chapters_listbox_contents(
-        self, chapters_filename: str, player: PlayerProxy
-    ) -> Tuple[str, Dict[str, str], List[callable]]:
-        chapters_title: str = ""
-        chapters: Dict[str, str] = {}
-        try:
-            chapters_title, chapters = mpris_helpers.load_chapters_file(
-                chapters_filename
-            )
-        except FileNotFoundError as fe:
-            logger.error(fe)
-            raise fe
-        except ValueError as ve:
-            logger.error(ve)
-        listbox_items: List[str] = []
-        chapters_position_functions: List[callable] = []
-        chapter: str
-        position: str
-        for index, (chapter, position) in enumerate(chapters.items()):
-            listbox_items.append(f"{index+1}.    {chapter} ({position})")
-            chapters_position_functions.append(
-                partial(self._gui_controller.set_player_position, position)
-            )
-        return (chapters_title, listbox_items, chapters_position_functions)
+        self._view.menu_bar.bind_load_chapters_from_youtube_command(
+            self._gui_controller.handle_load_chapters_from_youtube
+        )
 
     def create_chapters_panel_bindings(self):
         if self._chapters_filename:
@@ -257,7 +256,7 @@ class AppGuiBuilder:
                 self._chapters_title,
                 self._chapters_listbox_items,
                 self._chapters_position_functions,
-            ) = self.get_chapters_listbox_contents(
+            ) = self._gui_controller.get_chapters_listbox_contents(
                 self._chapters_filename, PlayerProxy(None)
             )
         else:
@@ -301,6 +300,55 @@ def build_gui_menu(chapters_filename: str, player: PlayerProxy) -> AppMainWindow
     gui_builder.create_chapters_panel_bindings()
     gui_builder.create_player_control_panel_bindings()
     return gui_builder.chapters_gui_window
+
+
+class YoutubeChaptersPopup:
+    def __init__(self, master: tk.Tk):
+        self._video = ""
+        self._master: tk.Tk = master
+
+    def get_video(self) -> str:
+        self._popup = tk.Toplevel(self._master)
+        self._popup.title("Enter Youtube video id or url")
+        self._create_video_entry_panel()
+        self._popup.resizable(width=False, height=False)
+        self._popup.grid()
+        # set to be on top of the main window
+        self._popup.transient(self._master)
+        # hijack all commands from the master (clicks on the main window are ignored)
+        self._popup.grab_set()
+        self._master.wait_window(
+            self._popup
+        )  # pause anything on the main window until this one closes
+        return self._video_name.get()
+
+    def _create_video_entry_panel(self):
+        input_panel = ttk.LabelFrame(master=self._popup, text="Youtube Video", width=50)
+        self._video_name = tk.StringVar()
+        self._video_name_entry = ttk.Entry(
+            master=input_panel, textvariable=self._video_name
+        )
+        self._video_name_entry.grid(padx=5, pady=5)
+        input_panel.grid(padx=5, pady=5)
+
+        button_panel = ttk.Frame(master=self._popup)
+        ok_button = ttk.Button(
+            master=button_panel, text="OK", command=self._handle_ok_command
+        )
+        cancel_button = ttk.Button(
+            master=button_panel, text="Cancel", command=self._handle_cancel_command
+        )
+        ok_button.grid(row=0, column=1, padx=10)
+        cancel_button.grid(row=0, column=2, padx=10)
+        button_panel.grid_columnconfigure(0, weight=1)
+        button_panel.grid_rowconfigure(0, weight=1)
+        button_panel.grid(padx=5, pady=5)
+
+    def _handle_cancel_command(self):
+        self._popup.destroy()
+
+    def _handle_ok_command(self):
+        self._popup.destroy()
 
 
 class PlayerConnectionPopup:

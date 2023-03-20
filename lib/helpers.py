@@ -11,7 +11,7 @@ from enum import IntEnum
 from functools import lru_cache
 from consolemenu import SelectionMenu
 from typing import List, Dict, Tuple
-
+import lib.yt_ch as youtube_chapters
 
 logger = logging.getLogger(__name__)
 
@@ -96,25 +96,44 @@ def to_HHMMSS(microsecs: int) -> str:
     return f"{hr_s}:{min_s}:{sec_s}"
 
 
-def load_chapters_file(chapters_file: str) -> Tuple[str, Dict[str, str]]:
-    if os.path.isfile(chapters_file) is False:
-        logger.error(f"{chapters_file} does not exist")
-        raise FileNotFoundError(f"{chapters_file} does not exist")
+def chapters_json_to_py(ch_json: str) -> Tuple[str, Dict[str, str]]:
     chapters = {}
     title = "No Title"
     try:
-        with open(chapters_file, "r") as f:
-            json_dict = json.load(f)
+        json_dict = json.loads(ch_json)
     except json.JSONDecodeError as e:
-        logger.critical(f"The file {chapters_file} is not a valid JSON document. {e}")
-        raise ValueError(f"The file {chapters_file} is not a valid JSON document.{e}")
+        logger.critical(f"Chapters content is not a valid JSON document. {e}")
+        raise ValueError(f"Chapters content is not a valid JSON document.{e}")
 
     if json_dict["title"]:
         title = json_dict["title"]
     if json_dict["chapters"]:
         chapters = json_dict["chapters"]
     else:
-        raise ValueError(f'{chapters_file} file is missing "chapters" object')
+        raise ValueError('Chapters JSON is missing "chapters" object')
+    return title, chapters
+
+
+def load_chapters_file(chapters_file: str) -> Tuple[str, Dict[str, str]]:
+    if os.path.isfile(chapters_file) is False:
+        logger.error(f"{chapters_file} does not exist")
+        raise FileNotFoundError(f"{chapters_file} does not exist")
+    chapters = {}
+    title = "No Title"
+    chapters_json = ""
+    with open(chapters_file, "r") as f:
+        chapters_json = f.read()
+
+    (title, chapters) = chapters_json_to_py(chapters_json)
+    return title, chapters
+
+
+def load_chapters_from_youtube(video: str):
+    chapters = {}
+    title = "No Title"
+    chapters_json = ""
+    chapters_json = youtube_chapters.get_chapters_json(video)
+    (title, chapters) = chapters_json_to_py(chapters_json)
     return title, chapters
 
 
