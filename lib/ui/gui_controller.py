@@ -150,10 +150,14 @@ class GuiController:
         video_name = video_name.strip()
         if not video_name:
             return
+        try:
+            (chapters_title, chapters) = helpers.load_chapters_from_youtube(
+                video=video_name
+            )
+        except Exception as e:
+            logger.error(e)
+            return
 
-        (chapters_title, chapters) = helpers.load_chapters_from_youtube(
-            video=video_name
-        )
         (
             listbox_items,
             chapters_position_functions,
