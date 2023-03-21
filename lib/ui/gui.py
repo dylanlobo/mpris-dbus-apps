@@ -252,22 +252,8 @@ class AppGuiBuilder:
 
     def create_chapters_panel_bindings(self):
         if self._chapters_filename:
-            (
-                self._chapters_title,
-                self._chapters_listbox_items,
-                self._chapters_position_functions,
-            ) = self._gui_controller.get_chapters_listbox_contents(
-                self._chapters_filename, PlayerProxy(None)
-            )
-        else:
-            self._chapters_title = ""
-            self._chapters_listbox_items = []
-            self._chapters_position_functions = []
-        self._view.set_main_window_title(self._chapters_title)
-        self._view.set_chapters(chapters=self._chapters_listbox_items)
-        self._view.bind_chapters_selection_commands(
-            chapters_selection_action_functs=self._chapters_position_functions
-        )
+            self._gui_controller.set_chapters_file(self._chapters_filename)
+            self._gui_controller.set_listbox_items()
 
     def create_player_control_panel_bindings(self):
         button_action_funcs = {
@@ -308,9 +294,12 @@ class YoutubeChaptersPopup:
         self._master: tk.Tk = master
 
     def get_video(self) -> str:
+        self._video_name_return = ""
         self._popup = tk.Toplevel(self._master)
         self._popup.title("Enter Youtube video id or url")
         self._create_video_entry_panel()
+        self._popup.bind("<Return>", self._handle_enter_pressed)
+        self._popup.bind("<Escape>", self._handle_escape_pressed)
         self._popup.resizable(width=False, height=False)
         self._popup.grid()
         # set to be on top of the main window
@@ -320,16 +309,18 @@ class YoutubeChaptersPopup:
         self._master.wait_window(
             self._popup
         )  # pause anything on the main window until this one closes
-        return self._video_name.get()
+        return self._video_name_return
 
     def _create_video_entry_panel(self):
-        input_panel = ttk.LabelFrame(master=self._popup, text="Youtube Video", width=50)
+        self._input_panel = ttk.LabelFrame(
+            master=self._popup, text="Youtube Video", width=50
+        )
         self._video_name = tk.StringVar()
         self._video_name_entry = ttk.Entry(
-            master=input_panel, textvariable=self._video_name
+            master=self._input_panel, textvariable=self._video_name
         )
         self._video_name_entry.grid(padx=5, pady=5)
-        input_panel.grid(padx=5, pady=5)
+        self._input_panel.grid(padx=5, pady=5)
 
         button_panel = ttk.Frame(master=self._popup)
         ok_button = ttk.Button(
@@ -348,7 +339,14 @@ class YoutubeChaptersPopup:
         self._popup.destroy()
 
     def _handle_ok_command(self):
+        self._video_name_return = self._video_name.get()
         self._popup.destroy()
+
+    def _handle_enter_pressed(self, event):
+        self._handle_ok_command()
+
+    def _handle_escape_pressed(self, event):
+        self._handle_cancel_command()
 
 
 class PlayerConnectionPopup:

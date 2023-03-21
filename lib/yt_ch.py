@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 try:
     from yt_dlp import YoutubeDL
-except:
+except Exception:
     logger.critical(
         "yt-dlp package is required for this fucionality.\n"
         "yt-dlp can be installed via: \n"
@@ -25,8 +25,6 @@ regex = re.compile(
     r"(?:/?|[/?]\S+)$",
     re.IGNORECASE,
 )
-
-# pip install --upgrade yt-dlp
 
 
 def get_arguments():
@@ -151,7 +149,7 @@ def isURL(in_str):
 if __name__ == "__main__":
     try:
         type(YoutubeDL)
-    except:
+    except Exception:
         exit()
     prog_args = get_arguments()
     json_doc = get_chapters_json(prog_args.id)
