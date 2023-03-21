@@ -292,6 +292,7 @@ class YoutubeChaptersPopup:
     def __init__(self, master: tk.Tk):
         self._video = ""
         self._master: tk.Tk = master
+        self._video_name = tk.StringVar()
 
     def get_video(self) -> str:
         self._video_name_return = ""
@@ -300,6 +301,7 @@ class YoutubeChaptersPopup:
         self._create_video_entry_panel()
         self._popup.bind("<Return>", self._handle_enter_pressed)
         self._popup.bind("<Escape>", self._handle_escape_pressed)
+        self._popup.bind("<Button-3>", self._handle_right_click_pressed)
         self._popup.resizable(width=False, height=False)
         self._popup.grid()
         # set to be on top of the main window
@@ -347,6 +349,11 @@ class YoutubeChaptersPopup:
 
     def _handle_escape_pressed(self, event):
         self._handle_cancel_command()
+
+    def _handle_right_click_pressed(self, event):
+        paste_text: str = self._master.clipboard_get()
+        if paste_text:
+            self._video_name.set(paste_text)
 
 
 class PlayerConnectionPopup:
