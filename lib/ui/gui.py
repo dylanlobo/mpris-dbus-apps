@@ -116,6 +116,7 @@ class AppMainWindow(tk.Tk):
 
     def __init__(self, media_title: str):
         super().__init__(className="Chapters")
+        self.bind("<Escape>", self._handle_escape_pressed)
         self.title(media_title)
         icon.apply_icon(self)
         self.wm_title()
@@ -153,6 +154,9 @@ class AppMainWindow(tk.Tk):
     @player_control_panel.setter
     def player_control_panel(self, player_control_panel: PlayerControlPanel):
         self._player_control_panel = player_control_panel
+
+    def _handle_escape_pressed(self, event):
+        self.destroy()
 
     def show_display(self):
         self.grid()
