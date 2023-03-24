@@ -366,6 +366,7 @@ class PlayerConnectionPopup:
     def select_new_player(self) -> PlayerProxy:
         self._popup = tk.Toplevel(self._master)
         self._popup.title("Connect to Player")
+        self._popup.bind("<Return>", self._handle_enter_pressed)
         self._popup.bind("<Escape>", self._handle_escape_pressed)
         self._running_players = self._running_players
         if not self._running_players:
@@ -406,6 +407,7 @@ class PlayerConnectionPopup:
             height=lb_height,
         )
         self._players_listbox.grid(column=0, row=0, sticky="NWES")
+        self._players_listbox.select_set(0)
         sv = ttk.Scrollbar(
             players_panel, orient=tk.VERTICAL, command=self._players_listbox.yview
         )
@@ -447,6 +449,9 @@ class PlayerConnectionPopup:
 
     def _handle_ok_command(self):
         self._popup.destroy()
+
+    def _handle_enter_pressed(self, event):
+        self._handle_connect_command()
 
     def _handle_escape_pressed(self, event):
         self._handle_cancel_command()
