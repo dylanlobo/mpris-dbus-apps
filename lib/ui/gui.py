@@ -333,6 +333,7 @@ class YoutubeChaptersPopup:
         )
         ok_button.grid(row=0, column=1, padx=10)
         cancel_button.grid(row=0, column=2, padx=10)
+        ok_button.focus_force()
         button_panel.grid_columnconfigure(0, weight=1)
         button_panel.grid_rowconfigure(0, weight=1)
         button_panel.grid(padx=5, pady=5)
@@ -365,6 +366,7 @@ class PlayerConnectionPopup:
     def select_new_player(self) -> PlayerProxy:
         self._popup = tk.Toplevel(self._master)
         self._popup.title("Connect to Player")
+        self._popup.bind("<Escape>", self._handle_escape_pressed)
         self._running_players = self._running_players
         if not self._running_players:
             self._create_error_message_panel()
@@ -430,6 +432,7 @@ class PlayerConnectionPopup:
         button_panel.grid_columnconfigure(0, weight=1)
         button_panel.grid_rowconfigure(0, weight=1)
         button_panel.grid(pady=10)
+        connect_button.focus_force()
 
     def _handle_connect_command(self):
         player_name = self._players_listbox.get(tk.ACTIVE)
@@ -444,3 +447,6 @@ class PlayerConnectionPopup:
 
     def _handle_ok_command(self):
         self._popup.destroy()
+
+    def _handle_escape_pressed(self, event):
+        self._handle_cancel_command()
