@@ -3,13 +3,12 @@ from abc import ABC, abstractmethod
 import re
 import logging
 from typing import Any, Dict
-from functools import lru_cache, cached_property
+from functools import lru_cache, cached_property, wraps
 
 try:
-    import dbus
-    from dbus import DBusException
-except ImportError:
     import pydbus
+except ImportError:
+    import dbus
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +16,6 @@ logger = logging.getLogger(__name__)
 @lru_cache()
 def is_object_path_valid(path: str) -> bool:
     """Whether this is a valid object path.
-    .. see also:: https://dbus.freedesktop.org/doc/dbus-specification.html#message-protocol-marshaling-object-path
     :param path: The object path to validate.
     :returns: Whether the object path is valid.
     """
@@ -50,6 +48,10 @@ class Player(ABC):
     def __init__(self, mpris_player_name, ext_player_name) -> None:
         self._name = mpris_player_name
         self._ext_name = ext_player_name
+        self.connect()
+
+    def connect(self):
+        pass
 
     @abstractmethod
     def raise_window(self) -> None:
@@ -150,6 +152,22 @@ class Player(ABC):
         ...
 
 
+def reconnect_player(func):
+    @wraps(func)
+    def decorator(self, *args, **kwargs):
+        try:
+            func(self, *args, **kwargs)
+        except Exception as e:
+            logger.info(type(e))
+            logger.info(e)
+            logger.info("Possible player discconnection, attempting to reconnect")
+            self.connect()
+            logger.info(f"Attempting to call {func.__name__} again")
+            func(self, *args, **kwargs)
+
+    return decorator
+
+
 class PlayerProxy(Player):
     def __init__(self, player: Player):
         self._player = player
@@ -157,34 +175,46 @@ class PlayerProxy(Player):
     def set_player(self, player: Player):
         self._player = player
 
+    def connect(self):
+        if self._player:
+            self._player.connect()
+
+    @reconnect_player
     def raise_window(self) -> None:
         if self._player:
             self._player.raise_window()
 
+    @reconnect_player
     def play(self) -> None:
         if self._player:
             self._player.play()
 
+    @reconnect_player
     def play_pause(self) -> None:
         if self._player:
             self._player.play_pause()
 
+    @reconnect_player
     def pause(self) -> None:
         if self._player:
             self._player.pause()
 
+    @reconnect_player
     def stop(self) -> None:
         if self._player:
             self._player.stop()
 
+    @reconnect_player
     def seek(self, offset: int) -> None:
         if self._player:
             self._player.seek(offset)
 
+    @reconnect_player
     def set_position(self, to_position: int) -> None:
         if self._player:
             self._player.set_position(to_position)
 
+    @reconnect_player
     def get(self, interface_name: str, property_name: str) -> Any:
         if self._player:
             self._player.get(interface_name, property_name)
@@ -288,14 +318,18 @@ class Player_dbus_python(Player):
 
     def __init__(self, mpris_player_name, ext_player_name) -> None:
         super().__init__(mpris_player_name, ext_player_name)
+
+    def connect(self):
         bus = dbus.SessionBus()
         try:
             self._proxy = bus.get_object(self._name, "/org/mpris/MediaPlayer2")
-        except DBusException as e:
+        except Exception as e:
+            logger.error(f"Caught exceptio {type(e)}")
             logger.error(f"Unable to retrieve the {self._name} proxy from dbus.")
             logger.error(e)
             raise Exception(
-                f"Unable to connect to {self._ext_name}, check if {self._ext_name} it is running."
+                f"Unable to connect to {self._ext_name},"
+                f" check if {self._ext_name} it is running."
             )
         self._media_player2 = dbus.Interface(
             self._proxy, dbus_interface="org.mpris.MediaPlayer2"
@@ -331,13 +365,12 @@ class Player_dbus_python(Player):
         else:
             logger.warning(f"The trackid returned by {self.ext_name} is not valid.")
             logger.debug(
-                "Unable to use SetPosition(trackid,postion), due to invalid trackid value."
+                "Unable to use SetPosition(trackid,postion),"
+                " due to invalid trackid value."
             )
-            logger.debug(f"Attempting to use Seek() to set the requested postion.")
+            logger.debug("Attempting to use Seek() to set the requested postion.")
             cur_pos = self.position
             seek_to_position = to_position - cur_pos
-            # self.Seek(to_microsecs("99:59:59") * -1)
-            # self.Seek(to_position)
             self.seek(seek_to_position)
 
     def get(self, interface_name: str, property_name: str) -> Any:
@@ -403,6 +436,8 @@ class Player_pydbus(Player):
 
     def __init__(self, mpris_player_name, ext_player_name) -> None:
         super().__init__(mpris_player_name, ext_player_name)
+
+    def connect(self):
         bus = pydbus.SessionBus()
         try:
             self._proxy = bus.get(self._name, "/org/mpris/MediaPlayer2")
@@ -410,7 +445,8 @@ class Player_pydbus(Player):
             logger.error(f"Unable to retrieve the {self._name} proxy from dbus.")
             logger.error(type(e))
             raise Exception(
-                f"Unable to connect to {self._ext_name}, check if {self._ext_name} it is running."
+                f"Unable to connect to {self._ext_name},"
+                f" check if {self._ext_name} it is running."
             )
 
     def raise_window(self) -> None:
@@ -437,9 +473,10 @@ class Player_pydbus(Player):
         else:
             logger.warning(f"The trackid returned by {self.ext_name} is not valid.")
             logger.debug(
-                "Unable to use SetPosition(trackid,postion), due to invalid trackid value."
+                "Unable to use SetPosition(trackid,postion),"
+                " due to invalid trackid value."
             )
-            logger.debug(f"Attempting to use Seek() to set the requested postion.")
+            logger.debug("Attempting to use Seek() to set the requested postion.")
             cur_pos = self.position
             seek_to_position = to_position - cur_pos
             # self.Seek(to_microsecs("99:59:59") * -1)
