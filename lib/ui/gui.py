@@ -56,9 +56,17 @@ class ChaptersPanel(ttk.LabelFrame):
             self._chapter_selection_action_functs[index]()
 
 
+def ignore_params(func):
+    def decorator(self, *args, **kwargs):
+        func()
+
+    return decorator
+
+
 class PlayerControlPanel(ttk.LabelFrame):
     def __init__(self, master: tk.Tk):
         super().__init__(master, text="Player Controls")
+        self._master = master
         self._buttons = []
         self._buttons.append(ttk.Button(self, text="<<<", width=6))
         self._buttons.append(ttk.Button(self, text="<<", width=6))
@@ -67,15 +75,30 @@ class PlayerControlPanel(ttk.LabelFrame):
         self._buttons.append(ttk.Button(self, text=">", width=6))
         self._buttons.append(ttk.Button(self, text=">>", width=6))
         self._buttons.append(ttk.Button(self, text=">>>", width=6))
+        self._init_key_to_button_dict()
         for i in range(len(self._buttons)):
             self._buttons[i].grid(row=0, column=(i + 1), padx=5, pady=10)
-
         self.grid(padx=10, pady=10)
+
+    def _init_key_to_button_dict(self):
+        self._key_to_button_dict = {
+            "<<<": "<Control-Left>",
+            "<<": "<Shift-Left>",
+            "<": "<Left>",
+            ">>>": "<Control-Right>",
+            ">>": "<Shift-Right>",
+            ">": "<Right>",
+        }
 
     def bind_player_controls_commands(self, player_controls_funcs: Dict[str, callable]):
         for button in self._buttons:
             button_name = button.cget("text")
             button.configure(command=player_controls_funcs[button_name])
+            if button_name in self._key_to_button_dict:
+                self._master.bind(
+                    self._key_to_button_dict[button_name],
+                    ignore_params(player_controls_funcs[button_name]),
+                )
 
 
 class AppMenuBar(tk.Menu):
@@ -261,7 +284,7 @@ class AppGuiBuilder:
 
     def create_player_control_panel_bindings(self):
         button_action_funcs = {
-            "Play/Pause": partial(self._gui_controller.play_pause_player),
+            "Play/Pause": self._gui_controller.play_pause_player,
             ">": partial(self._gui_controller.skip_player, offset="00:00:05"),
             ">>": partial(self._gui_controller.skip_player, offset="00:00:10"),
             ">>>": partial(self._gui_controller.skip_player, offset="00:01:00"),
