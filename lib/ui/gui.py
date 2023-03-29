@@ -56,7 +56,12 @@ class ChaptersPanel(ttk.LabelFrame):
             self._chapter_selection_action_functs[index]()
 
 
-def ignore_params(func):
+def ignore_arguments(func):
+    """A decorator function that ignores all arguments and calls a function
+    without any parameters. Useful in cases when a function is called via a
+    callback that expects to call the function with one or more parameters
+    that the pre-existing function does not require."""
+
     def decorator(self, *args, **kwargs):
         func()
 
@@ -97,7 +102,7 @@ class PlayerControlPanel(ttk.LabelFrame):
             if button_name in self._key_to_button_dict:
                 self._master.bind(
                     self._key_to_button_dict[button_name],
-                    ignore_params(player_controls_funcs[button_name]),
+                    ignore_arguments(player_controls_funcs[button_name]),
                 )
 
 
