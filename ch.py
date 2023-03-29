@@ -18,7 +18,7 @@ from lib.ui.console_ui import build_console_menu
 from lib.ui.gui import build_gui_menu
 
 # logging.basicConfig(filename="log.txt", filemode="w", level=logging.DEBUG)
-logging.basicConfig(level=logging.ERROR)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -38,10 +38,10 @@ def main():
             logger.debug("Created player")
     except PlayerCreationError as e:
         print(e)
-        if not arguments.c:
-            launch_gui(chapters_file, selected_player)
-            return
-
+    if not arguments.c:
+        launch_gui(chapters_file, selected_player)
+        return
+    try:
         if len(running_players) == 0:
             print("No mpris enabled players are running.")
             return
