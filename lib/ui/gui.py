@@ -24,18 +24,20 @@ class ChaptersPanel(ttk.LabelFrame):
         self._chapters = chapters
         self._chapter_selection_action_functs = chapters_selection_action_functs
         lb_height = 10
-        lb = tk.Listbox(
+        self._lb = tk.Listbox(
             self, listvariable=tk.StringVar(value=chapters), width=60, height=lb_height
         )
-        self._chapters_lb = lb
-        lb.grid(column=0, row=0, sticky="NWES")
-        sv = ttk.Scrollbar(self, orient=tk.VERTICAL, command=lb.yview)
+        self._chapters_lb = self._lb
+        self._lb.grid(column=0, row=0, sticky="NWES")
+        sv = ttk.Scrollbar(self, orient=tk.VERTICAL, command=self._lb.yview)
         sv.grid(column=1, row=0, sticky="NS")
-        lb["yscrollcommand"] = sv.set
-        sh = ttk.Scrollbar(self, orient=tk.HORIZONTAL, command=lb.xview)
+        self._lb["yscrollcommand"] = sv.set
+        sh = ttk.Scrollbar(self, orient=tk.HORIZONTAL, command=self._lb.xview)
         sh.grid(column=0, row=1, sticky="EW")
-        lb["xscrollcommand"] = sh.set
-        lb.bind("<<ListboxSelect>>", self.lb_selection_handler)
+        self._lb["xscrollcommand"] = sh.set
+        self._lb.bind("<Return>", self.lb_selection_handler)
+        self._lb.bind("<Button-3>", self.lb_right_button_handler)
+        self._lb.bind("<Button-3>", self.lb_selection_handler, add="+")
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
         self.grid()
@@ -48,6 +50,11 @@ class ChaptersPanel(ttk.LabelFrame):
         self, chapters_selection_action_functs: List[callable]
     ):
         self._chapter_selection_action_functs = chapters_selection_action_functs
+
+    def lb_right_button_handler(self, event):
+        self._lb.selection_clear(0, tk.END)
+        self._lb.selection_set(self._lb.nearest(event.y))
+        self._lb.activate(self._lb.nearest(event.y))
 
     def lb_selection_handler(self, event):
         selection = event.widget.curselection()
