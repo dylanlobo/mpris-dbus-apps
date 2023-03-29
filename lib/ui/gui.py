@@ -80,13 +80,13 @@ class PlayerControlPanel(ttk.LabelFrame):
         self._buttons.append(ttk.Button(self, text=">", width=6))
         self._buttons.append(ttk.Button(self, text=">>", width=6))
         self._buttons.append(ttk.Button(self, text=">>>", width=6))
-        self._init_key_to_button_dict()
+        self._init_button_to_key_dict()
         for i in range(len(self._buttons)):
             self._buttons[i].grid(row=0, column=(i + 1), padx=5, pady=10)
         self.grid(padx=10, pady=10)
 
-    def _init_key_to_button_dict(self):
-        self._key_to_button_dict = {
+    def _init_button_to_key_dict(self):
+        self._button_to_key_dict = {
             "<<<": "<Control-Left>",
             "<<": "<Shift-Left>",
             "<": "<Left>",
@@ -99,9 +99,9 @@ class PlayerControlPanel(ttk.LabelFrame):
         for button in self._buttons:
             button_name = button.cget("text")
             button.configure(command=player_controls_funcs[button_name])
-            if button_name in self._key_to_button_dict:
+            if button_name in self._button_to_key_dict:
                 self._master.bind(
-                    self._key_to_button_dict[button_name],
+                    self._button_to_key_dict[button_name],
                     ignore_arguments(player_controls_funcs[button_name]),
                 )
 
