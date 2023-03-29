@@ -53,6 +53,7 @@ class ChaptersPanel(ttk.LabelFrame):
 
     def lb_right_button_handler(self, event):
         self._lb.selection_clear(0, tk.END)
+        self._lb.focus_set()
         self._lb.selection_set(self._lb.nearest(event.y))
         self._lb.activate(self._lb.nearest(event.y))
 
