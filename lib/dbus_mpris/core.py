@@ -158,7 +158,7 @@ def reconnect_player(func):
         try:
             func(self, *args, **kwargs)
         except Exception as e:
-            logger.info(type(e))
+            logger.error(type(e))
             logger.info(e)
             logger.info("Possible player discconnection, attempting to reconnect")
             self.connect()
@@ -441,10 +441,10 @@ class Player_pydbus(Player):
         bus = pydbus.SessionBus()
         try:
             self._proxy = bus.get(self._name, "/org/mpris/MediaPlayer2")
-        except Exception as e:
+        except KeyError as e:
+            logger.error(e)
             logger.error(f"Unable to retrieve the {self._name} proxy from dbus.")
-            logger.error(type(e))
-            raise Exception(
+            raise PlayerConnectionError(
                 f"Unable to connect to {self._ext_name},"
                 f" check if {self._ext_name} it is running."
             )
@@ -568,24 +568,32 @@ class PlayerFactory:
     def get_player(fq_player_name, short_player_name) -> Player:
         try:
             type(pydbus)
-            logger.info("Creating a Player_pydbus instance.")
+            logger.debug("Creating a Player_pydbus instance.")
             player = Player_pydbus(fq_player_name, short_player_name)
             return PlayerProxy(player)
         except (NameError, KeyError):
-            logger.info("Creating a Player_dbus_python instance.")
+            logger.debug("Creating a Player_dbus_python instance.")
             player = Player_dbus_python(fq_player_name, short_player_name)
             return PlayerProxy(player)
+        except PlayerConnectionError as per:
+            raise PlayerCreationError(per)
         except Exception as e:
             logger.error(type(e))
             logger.error(e)
-            raise PlayerCreationFailure(e)
+            raise PlayerCreationError(e)
 
 
 class NoValidMprisPlayersError(Exception):
     pass
 
 
-class PlayerCreationFailure(Exception):
+class PlayerConnectionError(Exception):
+    def __init__(self, *args) -> None:
+        super().__init__(*args)
+        logger.error("Player connection failed")
+
+
+class PlayerCreationError(Exception):
     def __init__(self, *args) -> None:
         super().__init__(*args)
         logger.error("Player creation failed")

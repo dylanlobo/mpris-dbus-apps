@@ -7,7 +7,7 @@ from . import ch_icon as icon
 from typing import List, Dict
 from functools import partial
 from ..helpers import Direction
-from lib.dbus_mpris.core import PlayerProxy, PlayerFactory
+from lib.dbus_mpris.core import PlayerProxy, PlayerFactory, PlayerCreationError
 from .gui_controller import GuiController, AppInterface
 
 logger = logging.getLogger(__name__)
@@ -472,7 +472,11 @@ class PlayerConnectionPopup:
         player_name = self._players_listbox.get(tk.ACTIVE)
         fq_player_name = self._running_players[player_name]
         if fq_player_name:
-            self._new_player = PlayerFactory.get_player(fq_player_name, player_name)
+            try:
+                self._new_player = PlayerFactory.get_player(fq_player_name, player_name)
+            except PlayerCreationError as e:
+                logger.error(e)
+                # show a popup error here
         self._popup.destroy()
 
     def _handle_cancel_command(self):

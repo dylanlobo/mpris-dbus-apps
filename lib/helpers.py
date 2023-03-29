@@ -6,7 +6,12 @@ import re
 import logging
 import os
 import json
-from lib.dbus_mpris.core import NoValidMprisPlayersError, Player, PlayerFactory
+from lib.dbus_mpris.core import (
+    PlayerCreationError,
+    NoValidMprisPlayersError,
+    Player,
+    PlayerFactory,
+)
 from enum import IntEnum
 from functools import lru_cache
 from consolemenu import SelectionMenu
@@ -40,7 +45,12 @@ def get_player(player_name: str, running_players: Dict[str, str]) -> Player:
         specified player instance name.
     """
     mpris_player_name = running_players[player_name]
-    player = PlayerFactory.get_player(mpris_player_name, player_name)
+    player = None
+    try:
+        player = PlayerFactory.get_player(mpris_player_name, player_name)
+    except PlayerCreationError as e:
+        logger.error(e)
+        raise e
     return player
 
 

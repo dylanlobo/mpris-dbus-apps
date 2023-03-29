@@ -9,7 +9,11 @@ import argparse
 import logging
 
 import lib.helpers as mpris_helpers
-from lib.dbus_mpris.core import NoValidMprisPlayersError, PlayerFactory
+from lib.dbus_mpris.core import (
+    PlayerCreationError,
+    NoValidMprisPlayersError,
+    PlayerFactory,
+)
 from lib.ui.console_ui import build_console_menu
 from lib.ui.gui import build_gui_menu
 
@@ -23,22 +27,24 @@ def main():
     running_players = PlayerFactory.get_running_player_names()
     selected_player = None
     chapters_file = arguments.f
-    if len(running_players) == 1:
-        player_names = list(running_players.keys())
-        selected_player_name = player_names[0]
-        logger.debug("Creating player")
-        selected_player = mpris_helpers.get_player(
-            selected_player_name, running_players
-        )
-        logger.debug("Created player")
-    if not arguments.c:
-        launch_gui(chapters_file, selected_player)
-        return
-
-    if len(running_players) == 0:
-        print("No mpris enabled players are running.")
-        return
     try:
+        if len(running_players) == 1:
+            player_names = list(running_players.keys())
+            selected_player_name = player_names[0]
+            logger.debug("Creating player")
+            selected_player = mpris_helpers.get_player(
+                selected_player_name, running_players
+            )
+            logger.debug("Created player")
+    except PlayerCreationError as e:
+        print(e)
+        if not arguments.c:
+            launch_gui(chapters_file, selected_player)
+            return
+
+        if len(running_players) == 0:
+            print("No mpris enabled players are running.")
+            return
         if not selected_player:
             logger.debug("Creating player")
             selected_player = mpris_helpers.get_selected_player(running_players)
@@ -48,7 +54,7 @@ def main():
             raise FileNotFoundError()
         launch_console(arguments, chapters_file, selected_player)
 
-    except NoValidMprisPlayersError as err:
+    except (NoValidMprisPlayersError, PlayerCreationError) as err:
         print(err)
     except FileNotFoundError:
         print(
