@@ -567,15 +567,25 @@ class PlayerFactory:
     @staticmethod
     def get_player(fq_player_name, short_player_name) -> Player:
         try:
-            type(dbus)
-            logger.info("Creating a Player_dbus_python instance.")
-            player = Player_dbus_python(fq_player_name, short_player_name)
-            return PlayerProxy(player)
-        except NameError:
+            type(pydbus)
             logger.info("Creating a Player_pydbus instance.")
             player = Player_pydbus(fq_player_name, short_player_name)
             return PlayerProxy(player)
+        except (NameError, KeyError):
+            logger.info("Creating a Player_dbus_python instance.")
+            player = Player_dbus_python(fq_player_name, short_player_name)
+            return PlayerProxy(player)
+        except Exception as e:
+            logger.error(type(e))
+            logger.error(e)
+            raise PlayerCreationFailure(e)
 
 
 class NoValidMprisPlayersError(Exception):
     pass
+
+
+class PlayerCreationFailure(Exception):
+    def __init__(self, *args) -> None:
+        super().__init__(*args)
+        logger.error("Player creation failed")
