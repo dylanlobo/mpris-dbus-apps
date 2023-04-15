@@ -70,6 +70,14 @@ class Player(ABC):
         ...
 
     @abstractmethod
+    def next(self) -> None:
+        ...
+
+    @abstractmethod
+    def previous(self) -> None:
+        ...
+
+    @abstractmethod
     def stop(self) -> None:
         ...
 
@@ -198,6 +206,16 @@ class PlayerProxy(Player):
     def pause(self) -> None:
         if self._player:
             self._player.pause()
+
+    @reconnect_player
+    def next(self) -> None:
+        if self._player:
+            self._player.next()
+
+    @reconnect_player
+    def previous(self) -> None:
+        if self._player:
+            self._player.previous()
 
     @reconnect_player
     def stop(self) -> None:
@@ -353,6 +371,12 @@ class Player_dbus_python(Player):
     def pause(self) -> None:
         self.mpris_player.Pause()
 
+    def next(self) -> None:
+        self.mpris_player.Next()
+
+    def previous(self) -> None:
+        self.mpris_player.Previous()
+
     def stop(self) -> None:
         self.mpris_player.Stop()
 
@@ -460,6 +484,12 @@ class Player_pydbus(Player):
 
     def pause(self) -> None:
         self.mpris_player.Pause()
+
+    def next(self) -> None:
+        self.mpris_player.Next()
+
+    def previous(self) -> None:
+        self.mpris_player.Previous()
 
     def stop(self) -> None:
         self.mpris_player.Stop()

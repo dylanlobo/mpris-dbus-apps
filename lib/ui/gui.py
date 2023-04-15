@@ -81,13 +81,15 @@ class PlayerControlPanel(ttk.LabelFrame):
         super().__init__(master, text="Player Controls")
         self._master = master
         self._buttons = []
-        self._buttons.append(ttk.Button(self, text="<<<", width=6))
-        self._buttons.append(ttk.Button(self, text="<<", width=6))
-        self._buttons.append(ttk.Button(self, text="<", width=6))
+        self._buttons.append(ttk.Button(self, text="|<", width=3))
+        self._buttons.append(ttk.Button(self, text="<<<", width=4))
+        self._buttons.append(ttk.Button(self, text="<<", width=4))
+        self._buttons.append(ttk.Button(self, text="<", width=4))
         self._buttons.append(ttk.Button(self, text="Play/Pause"))
-        self._buttons.append(ttk.Button(self, text=">", width=6))
-        self._buttons.append(ttk.Button(self, text=">>", width=6))
-        self._buttons.append(ttk.Button(self, text=">>>", width=6))
+        self._buttons.append(ttk.Button(self, text=">", width=4))
+        self._buttons.append(ttk.Button(self, text=">>", width=4))
+        self._buttons.append(ttk.Button(self, text=">>>", width=4))
+        self._buttons.append(ttk.Button(self, text=">|", width=3))
         self._init_button_to_key_dict()
         for i in range(len(self._buttons)):
             self._buttons[i].grid(row=0, column=(i + 1), padx=5, pady=10)
@@ -95,12 +97,14 @@ class PlayerControlPanel(ttk.LabelFrame):
 
     def _init_button_to_key_dict(self):
         self._button_to_key_dict = {
+            "|<": "<Control-Shift-Left>",
             "<<<": "<Control-Left>",
             "<<": "<Shift-Left>",
             "<": "<Left>",
             ">>>": "<Control-Right>",
             ">>": "<Shift-Right>",
             ">": "<Right>",
+            ">|": "<Control-Shift-Right>",
         }
 
     def bind_player_controls_commands(self, player_controls_funcs: Dict[str, callable]):
@@ -228,6 +232,9 @@ class AppMainWindow(tk.Tk):
             load_chapters_from_youtube_command
         )
 
+    def bind_reload_chapters(self, reload_chapters: callable):
+        self.bind("<F5>", reload_chapters)
+
     def request_chapters_filename(self) -> str:
         if not self._chapters_file_path:
             self._chapters_file_path = f"{Path.home()}/Videos/Computing"
@@ -298,6 +305,7 @@ class AppGuiBuilder:
     def create_player_control_panel_bindings(self):
         button_action_funcs = {
             "Play/Pause": self._gui_controller.play_pause_player,
+            ">|": self._gui_controller.next_player,
             ">": partial(self._gui_controller.skip_player, offset="00:00:05"),
             ">>": partial(self._gui_controller.skip_player, offset="00:00:10"),
             ">>>": partial(self._gui_controller.skip_player, offset="00:01:00"),
@@ -316,8 +324,12 @@ class AppGuiBuilder:
                 offset="00:01:00",
                 direction=Direction.REVERSE,
             ),
+            "|<": self._gui_controller.previous_player,
         }
         self._view.bind_player_controls_commands(button_action_funcs)
+
+    def create_app_window_bindings(self):
+        self._view.bind_reload_chapters(self._gui_controller.handle_reload_chapters)
 
 
 def build_gui_menu(chapters_filename: str, player: PlayerProxy) -> AppMainWindow:
@@ -325,6 +337,7 @@ def build_gui_menu(chapters_filename: str, player: PlayerProxy) -> AppMainWindow
     gui_builder.create_menu_bar_bindings()
     gui_builder.create_chapters_panel_bindings()
     gui_builder.create_player_control_panel_bindings()
+    gui_builder.create_app_window_bindings()
     return gui_builder.chapters_gui_window
 
 

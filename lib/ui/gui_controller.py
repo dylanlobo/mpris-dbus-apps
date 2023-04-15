@@ -48,6 +48,9 @@ class AppInterface(Protocol):
     def bind_load_chapters_command(self, load_chapters_file_command: callable):
         ...
 
+    def bind_reload_chapters(self, reload_chapters: callable):
+        ...
+
     def show_display(self):
         ...
 
@@ -137,6 +140,12 @@ class GuiController:
     def play_pause_player(self):
         self._cur_player.play_pause()
 
+    def next_player(self):
+        self._cur_player.next()
+
+    def previous_player(self):
+        self._cur_player.previous()
+
     def handle_connection_command(self):
         new_player = self._view.select_new_player()
         if new_player:
@@ -185,3 +194,14 @@ class GuiController:
             # message popup before returning
             return
         self.set_listbox_items()
+
+    def handle_reload_chapters(self, event):
+        if self._chapters_file_name:
+            try:
+                self.set_chapters_file(self._chapters_file_name)
+            except (FileNotFoundError, ValueError) as e:
+                logger.error(e)
+                # TODO Implement and make call to view object to display error
+                # message popup before returning
+                return
+            self.set_listbox_items()
