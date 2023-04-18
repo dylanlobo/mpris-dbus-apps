@@ -117,6 +117,9 @@ class PlayerControlPanel(ttk.LabelFrame):
                     ignore_arguments(player_controls_funcs[button_name]),
                 )
 
+    def set_player_instance_name(self, instance_name: str):
+        self.configure(text=f"Player Controls : {instance_name}")
+
 
 class AppMenuBar(tk.Menu):
     def __init__(self, main_window: tk.Tk):
@@ -205,6 +208,9 @@ class AppMainWindow(tk.Tk):
 
     def set_main_window_title(self, media_title: str):
         self.title(media_title)
+
+    def set_player_instance_name(self, instance_name):
+        self._player_control_panel.set_player_instance_name(instance_name)
 
     def set_chapters(self, chapters: List[str]):
         self._chapters_panel.set_chapters(chapters=chapters)

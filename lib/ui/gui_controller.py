@@ -31,6 +31,9 @@ class AppInterface(Protocol):
     def set_chapters(self, chapters: List[str]):
         ...
 
+    def set_player_instance_name(self, instance_name):
+        ...
+
     def bind_chapters_selection_commands(
         self, chapters_selection_action_functs: List[callable]
     ):
@@ -76,6 +79,7 @@ class GuiController:
 
     def set_cur_player(self, player: PlayerProxy):
         self._cur_player = player
+        self._view.set_player_instance_name(player.ext_name)
 
     @property
     def set_chapters_position_funcs(self):
