@@ -65,9 +65,9 @@ class GuiController:
         cur_player: PlayerProxy,
         app_gui_builder: AppGuiBuilderInterface,
     ):
-        self._cur_player = cur_player
         self._view = view
         self._gui_builder = app_gui_builder
+        self.set_cur_player(cur_player)
         self._chapters_file_name: str = ""
         self._chapters_yt_video: str = ""
         self._chapters_title: str = ""
