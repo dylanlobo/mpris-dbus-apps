@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 try:
     from yt_dlp import YoutubeDL
-except Exception:
+except:
     logger.critical(
         "yt-dlp package is required for this fucionality.\n"
         "yt-dlp can be installed via: \n"
@@ -26,6 +26,8 @@ regex = re.compile(
     re.IGNORECASE,
 )
 
+# pip install --upgrade yt-dlp
+
 
 def get_arguments():
     parser = argparse.ArgumentParser(
@@ -34,13 +36,11 @@ def get_arguments():
     parser.add_argument("id")
     parser.add_argument(
         "-f",
-        action="store",
+        action="store_true",
         required=False,
-        default="ch.json",
-        help="The file name of the file to store the"
-        "chapter titles and their time offsets in a JSON document: "
-        '{"title":"title name", "chapters":{"first chapter name" : '
-        '"hh:mm:ss","second chapter name" : "hh:mm:ss"}}',
+        default=False,
+        help="Store chapters info in a file with name of the title "
+        "and .ch file extension",
     )
     arguments = parser.parse_args()
     return arguments
@@ -136,7 +136,7 @@ def get_chapters_json(yt_video: str):
     chapters_metadata = {"title": video_title}
     chapters_metadata["chapters"] = chapters_timestamps
     chapters_json_doc = json.dumps(chapters_metadata, indent=4, separators=(",", ": "))
-    return chapters_json_doc
+    return video_title, chapters_json_doc
 
 
 def isURL(in_str):
@@ -149,10 +149,13 @@ def isURL(in_str):
 if __name__ == "__main__":
     try:
         type(YoutubeDL)
-    except Exception:
+    except:
         exit()
     prog_args = get_arguments()
-    json_doc = get_chapters_json(prog_args.id)
-
+    title, json_doc = get_chapters_json(prog_args.id)
     if json_doc:
-        print(json_doc)
+        if prog_args.f:
+            with open(f"{title}.ch", "w+") as f:
+                f.write(json_doc)
+        else:
+            print(json_doc)
