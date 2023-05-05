@@ -176,6 +176,18 @@ def reconnect_player(func):
     return decorator
 
 
+def handle_player_error(func: callable):
+    def decorator(*args, **kwargs):
+        try:
+            func(*args, **kwargs)
+        except Exception as e:
+            logger.error("An error occured when attempting to call the player")
+            logger.error(type(e))
+            raise
+
+    return decorator
+
+
 class PlayerProxy(Player):
     def __init__(self, player: Player):
         self._player = player
@@ -183,6 +195,7 @@ class PlayerProxy(Player):
     def set_player(self, player: Player):
         self._player = player
 
+    @handle_player_error
     def connect(self):
         if self._player:
             self._player.connect()
@@ -198,6 +211,7 @@ class PlayerProxy(Player):
             self._player.play()
 
     @reconnect_player
+    @handle_player_error
     def play_pause(self) -> None:
         if self._player:
             self._player.play_pause()
@@ -397,7 +411,9 @@ class Player_dbus_python(Player):
             seek_to_position = to_position - cur_pos
             self.seek(seek_to_position)
 
-    def get(self, interface_name: str, property_name: str) -> Any:
+    def get(
+        self, property_name: str, interface_name: str = "org.mpris.MediaPlayer2.Player"
+    ) -> Any:
         return self.mpris_player_properties.Get(interface_name, property_name)
 
     @property
@@ -422,40 +438,42 @@ class Player_dbus_python(Player):
 
     @property
     def playback_status(self) -> str:
-        return self.get("org.mpris.MediaPlayer2.Player", "PlaybackStatus")
+        return self.get(property_name="PlaybackStatus")
 
     @property
     def position(self) -> int:
-        return self.get("org.mpris.MediaPlayer2.Player", "Position")
+        return self.get(property_name="Position")
 
     @property
     def metadata(self) -> Dict[str, Any]:
-        return self.get("org.mpris.MediaPlayer2.Player", "Metadata")
+        return self.get(property_name="Metadata")
 
     @property
     def trackid(self) -> str:
-        if "mpris:trackid" in self.metadata:    
+        if "mpris:trackid" in self.metadata:
             return self.metadata["mpris:trackid"]
         else:
-            logger.warning(f"Metadata from {self.ext_name} does not contain mpris:trackid\n"
-                           f"Returning an empty string instead")
+            logger.warning(
+                f"Metadata from {self.ext_name} does not contain mpris:trackid\n"
+                f"Returning an empty string instead"
+            )
             return ""
 
     @cached_property
     def can_control(self) -> bool:
-        return self.get("org.mpris.MediaPlayer2.Player", "CanControl")
+        return self.get(property_name="CanControl")
 
     @cached_property
     def can_seek(self) -> bool:
-        return self.get("org.mpris.MediaPlayer2.Player", "CanSeek")
+        return self.get(property_name="CanSeek")
 
     @cached_property
     def can_pause(self) -> bool:
-        return self.get("org.mpris.MediaPlayer2.Player", "CanPause")
+        return self.get(property_name="CanPause")
 
     @cached_property
     def can_play(self) -> bool:
-        return self.get("org.mpris.MediaPlayer2.Player", "CanPlay")
+        return self.get(property_name="CanPlay")
 
 
 class Player_pydbus(Player):
@@ -477,6 +495,11 @@ class Player_pydbus(Player):
                 f"Unable to connect to {self._ext_name},"
                 f" check if {self._ext_name} it is running."
             )
+
+    def get(
+        self, property_name: str, interface_name="org.mpris.MediaPlayer2.Player"
+    ) -> Any:
+        return self.mpris_player_properties.Get(interface_name, property_name)
 
     def raise_window(self) -> None:
         self.mpris_media_player2.Raise()
@@ -514,8 +537,6 @@ class Player_pydbus(Player):
             logger.debug("Attempting to use Seek() to set the requested postion.")
             cur_pos = self.position
             seek_to_position = to_position - cur_pos
-            # self.Seek(to_microsecs("99:59:59") * -1)
-            # self.Seek(to_position)
             self.seek(seek_to_position)
 
     @property
@@ -540,40 +561,42 @@ class Player_pydbus(Player):
 
     @property
     def playback_status(self) -> str:
-        return self.mpris_player_properties.PlaybackStatus
+        return self.get(property_name="PlaybackStatus")
 
     @property
     def position(self) -> int:
-        return self.mpris_player_properties.Position
+        return self.get(property_name="Position")
 
     @property
     def metadata(self) -> Dict[str, Any]:
-        return self.mpris_player_properties.Metadata
+        return self.get(property_name="Metadata")
 
     @property
     def trackid(self) -> str:
-        if "mpris:trackid" in self.mpris_player_properties.Metadata:
-            return self.mpris_player_properties.Metadata["mpris:trackid"]
+        if "mpris:trackid" in self.metadata:
+            return self.metadata["mpris:trackid"]
         else:
-            logger.warning(f"Metadata from {self.ext_name} does not contain mpris:trackid\n"
-                           f"Returning an empty string instead")
+            logger.warning(
+                f"Metadata from {self.ext_name} does not contain mpris:trackid\n"
+                f"Returning an empty string instead"
+            )
             return ""
 
     @cached_property
     def can_control(self) -> bool:
-        return self.mpris_player_properties.CanControl
+        return self.get(property_name="CanControl")
 
     @cached_property
     def can_seek(self) -> bool:
-        return self.mpris_player_properties.CanSeek
+        return self.get(property_name="CanSeek")
 
     @cached_property
     def can_pause(self) -> bool:
-        return self.mpris_player_properties.CanPause
+        return self.get(property_name="CanPause")
 
     @cached_property
     def can_play(self) -> bool:
-        return self.mpris_player_properties.CanPlay
+        return self.get(property_name="CanPlay")
 
 
 class PlayerFactory:
