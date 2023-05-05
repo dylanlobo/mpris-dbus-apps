@@ -434,7 +434,12 @@ class Player_dbus_python(Player):
 
     @property
     def trackid(self) -> str:
-        return self.metadata["mpris:trackid"]
+        if "mpris:trackid" in self.metadata:    
+            return self.metadata["mpris:trackid"]
+        else:
+            logger.warning(f"Metadata from {self.ext_name} does not contain mpris:trackid\n"
+                           f"Returning an empty string instead")
+            return ""
 
     @cached_property
     def can_control(self) -> bool:
@@ -547,7 +552,12 @@ class Player_pydbus(Player):
 
     @property
     def trackid(self) -> str:
-        return self.mpris_player_properties.Metadata["mpris:trackid"]
+        if "mpris:trackid" in self.mpris_player_properties.Metadata:
+            return self.mpris_player_properties.Metadata["mpris:trackid"]
+        else:
+            logger.warning(f"Metadata from {self.ext_name} does not contain mpris:trackid\n"
+                           f"Returning an empty string instead")
+            return ""
 
     @cached_property
     def can_control(self) -> bool:
