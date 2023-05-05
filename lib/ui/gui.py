@@ -78,7 +78,8 @@ def ignore_arguments(func):
 
 class PlayerControlPanel(ttk.LabelFrame):
     def __init__(self, master: tk.Tk):
-        super().__init__(master, text="Player Controls")
+        self._default_title = "Player Controls"
+        super().__init__(master, text=self._default_title)
         self._master = master
         self._buttons = []
         self._buttons.append(ttk.Button(self, text="|<", width=3))
@@ -118,7 +119,10 @@ class PlayerControlPanel(ttk.LabelFrame):
                 )
 
     def set_player_instance_name(self, instance_name: str):
-        self.configure(text=f"Player Controls : {instance_name}")
+        if instance_name:
+            self.configure(text=f"{self._default_title} : {instance_name}")
+        else:
+            self.configure(text=self._default_title)
 
 
 class AppMenuBar(tk.Menu):
