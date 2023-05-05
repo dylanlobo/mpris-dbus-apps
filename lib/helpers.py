@@ -142,7 +142,7 @@ def load_chapters_from_youtube(video: str):
     chapters = {}
     title = "No Title"
     chapters_json = ""
-    chapters_json = youtube_chapters.get_chapters_json(video)
+    _, chapters_json = youtube_chapters.get_chapters_json(video)
     (title, chapters) = chapters_json_to_py(chapters_json)
     return title, chapters
 
