@@ -131,7 +131,7 @@ def load_chapters_file(chapters_file: str) -> Tuple[str, Dict[str, str]]:
         logger.error(f"{chapters_file} does not exist")
         raise FileNotFoundError(f"{chapters_file} does not exist")
     chapters = {}
-    title = "No Title"
+    title = "Chapters"
     chapters_json = ""
     with open(chapters_file, "r") as f:
         chapters_json = f.read()
@@ -142,7 +142,7 @@ def load_chapters_file(chapters_file: str) -> Tuple[str, Dict[str, str]]:
 
 def load_chapters_from_youtube(video: str):
     chapters = {}
-    title = "No Title"
+    title = "Chapters"
     chapters_json = ""
     _, chapters_json = youtube_chapters.get_chapters_json(video)
     (title, chapters) = chapters_json_to_py(chapters_json)
