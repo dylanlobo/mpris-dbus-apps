@@ -117,10 +117,12 @@ def chapters_json_to_py(ch_json: str) -> Tuple[str, Dict[str, str]]:
 
     if json_dict["title"]:
         title = json_dict["title"]
+    else:
+        title = "Chapters"
     if json_dict["chapters"]:
         chapters = json_dict["chapters"]
     else:
-        raise ValueError('Chapters JSON is missing "chapters" object')
+        chapters = {}
     return title, chapters
 
 
