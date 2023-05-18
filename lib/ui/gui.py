@@ -245,6 +245,9 @@ class AppMainWindow(tk.Tk):
     def bind_reload_chapters(self, reload_chapters: callable):
         self.bind("<F5>", reload_chapters)
 
+    def bind_clear_chapters(self, clear_chapters: callable):
+        self.bind("<Control-l>", clear_chapters)
+
     def request_chapters_filename(self) -> str:
         if not self._chapters_file_path:
             self._chapters_file_path = f"{Path.home()}/Videos/Computing"
@@ -340,6 +343,7 @@ class AppGuiBuilder:
 
     def create_app_window_bindings(self):
         self._view.bind_reload_chapters(self._gui_controller.handle_reload_chapters)
+        self._view.bind_clear_chapters(self._gui_controller.handle_clear_chapters)
 
 
 def build_gui_menu(chapters_filename: str, player: PlayerProxy) -> AppMainWindow:

@@ -54,6 +54,9 @@ class AppInterface(Protocol):
     def bind_reload_chapters(self, reload_chapters: callable):
         ...
 
+    def bind_clear_chapters(self, clear_chapters: callable):
+        ...
+
     def show_display(self):
         ...
 
@@ -68,9 +71,12 @@ class GuiController:
         self._view = view
         self._gui_builder = app_gui_builder
         self.set_cur_player(cur_player)
+        self._initialiase_chapters_content()
+
+    def _initialiase_chapters_content(self):
         self._chapters_file_name: str = ""
         self._chapters_yt_video: str = ""
-        self._chapters_title: str = ""
+        self._chapters_title: str = "Chapters"
         self._chapters: Dict[str, str] = {}
 
     @property
@@ -209,3 +215,7 @@ class GuiController:
                 # message popup before returning
                 return
             self.set_listbox_items()
+
+    def handle_clear_chapters(self, event):
+        self._initialiase_chapters_content()
+        self.set_listbox_items()
