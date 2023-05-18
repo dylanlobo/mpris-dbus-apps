@@ -76,7 +76,7 @@ class GuiController:
     def _initialiase_chapters_content(self):
         self._chapters_file_name: str = ""
         self._chapters_yt_video: str = ""
-        self._chapters_title: str = "Chapters"
+        self._chapters_title: str = "Chapters Player"
         self._chapters: Dict[str, str] = {}
 
     @property
