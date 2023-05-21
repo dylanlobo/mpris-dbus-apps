@@ -70,7 +70,7 @@ class GuiController:
     ):
         self._view = view
         self._gui_builder = app_gui_builder
-        self.set_cur_player(cur_player)
+        self.cur_player = cur_player
         self._initialiase_chapters_content()
 
     def _initialiase_chapters_content(self):
@@ -83,17 +83,18 @@ class GuiController:
     def cur_player(self):
         return self._cur_player
 
-    def set_cur_player(self, player: PlayerProxy):
+    @cur_player.setter
+    def cur_player(self, player: PlayerProxy):
         self._cur_player = player
         self._view.set_player_instance_name(player.ext_name)
 
     @property
-    def set_chapters_position_funcs(self):
+    def chapters_position_funcs(self):
         return self._chapter_position_funcs
 
-    @set_chapters_position_funcs.setter
-    def set_chapters_position_funcs(self, funcs_list: List[callable]):
-        self.set_chapters_position_funcs = funcs_list
+    @chapters_position_funcs.setter
+    def chapters_position_funcs(self, funcs_list: List[callable]):
+        self._chapters_position_funcs = funcs_list
 
     def set_chapters_file(self, filename: str):
         self._chapters_file_name = filename
@@ -159,7 +160,7 @@ class GuiController:
     def handle_connection_command(self):
         new_player = self._view.select_new_player()
         if new_player:
-            self.set_cur_player(new_player)
+            self.cur_player = new_player
 
     def get_chapters_listbox_contents(
         self,
