@@ -2,6 +2,7 @@
 Helper functions for mpris-dbus-apps
 """
 
+from pprint import pprint
 import re
 import logging
 import os
@@ -126,6 +127,14 @@ def chapters_json_to_py(ch_json: str) -> Tuple[str, Dict[str, str]]:
     return title, chapters
 
 
+def chapters_py_to_json(title: str, chapters: Dict[str, str]) -> str:
+    chapters_dict = {"title": None, "chapters": None}
+    title = title if title else "title"
+    chapters_dict["title"] = title
+    chapters_dict["chapters"] = chapters
+    return json.dumps(chapters_dict, indent=4)
+
+
 def load_chapters_file(chapters_file: str) -> Tuple[str, Dict[str, str]]:
     if os.path.isfile(chapters_file) is False:
         logger.error(f"{chapters_file} does not exist")
@@ -138,6 +147,12 @@ def load_chapters_file(chapters_file: str) -> Tuple[str, Dict[str, str]]:
 
     (title, chapters) = chapters_json_to_py(chapters_json)
     return title, chapters
+
+
+def save_chapters_file(chapters_file: str, title: str, chapters: Dict[str, str]):
+    json_str = chapters_py_to_json(title=title, chapters=chapters)
+    with open(chapters_file, "w") as f:
+        f.write(json_str)
 
 
 def load_chapters_from_youtube(video: str):

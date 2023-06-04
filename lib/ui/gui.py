@@ -135,12 +135,17 @@ class AppMenuBar(tk.Menu):
         self.add_cascade(label="Connect", menu=self._connection_menu)
 
         self._chapters_menu = tk.Menu(self, tearoff=0)
-        self.add_cascade(label="Load Chapters", menu=self._chapters_menu)
+        self.add_cascade(label="Chapters", menu=self._chapters_menu)
 
     def bind_connect_to_player_command(self, connect_player_command: callable):
         self._connection_menu.add_command(
             label="Connect to player ...",
             command=connect_player_command,
+        )
+
+    def bind_save_chapters_file_command(self, save_chapters_file_command: callable):
+        self._chapters_menu.add_command(
+            label="Save chapters file ...", command=save_chapters_file_command
         )
 
     def bind_load_chapters_file_command(self, load_chapters_file_command: callable):
@@ -232,6 +237,9 @@ class AppMainWindow(tk.Tk):
     def bind_connect_to_player_command(self, connect_player_command: callable):
         self._menu_bar.bind_connect_to_player_command(connect_player_command)
 
+    def bind_save_chapters_file_command(self, save_chapters_file_command: callable):
+        self._menu_bar.bind_save_chapters_file_command(save_chapters_file_command)
+
     def bind_load_chapters_file_command(self, load_chapters_file_command: callable):
         self._menu_bar.bind_load_chapters_file_command(load_chapters_file_command)
 
@@ -248,6 +256,24 @@ class AppMainWindow(tk.Tk):
     def bind_clear_chapters(self, clear_chapters: callable):
         self.bind("<Control-l>", clear_chapters)
 
+    def request_save_chapters_filename(self) -> str:
+        if not self._chapters_file_path:
+            self._chapters_file_path = f"{Path.home()}/Videos/Computing"
+        if not Path(self._chapters_file_path).exists():
+            self._chapters_file_path = f"{Path.home()}/Videos"
+        if not Path(self._chapters_file_path).exists():
+            self._chapters_file_path = f"{Path.home()}"
+        selected_chapters_filename = filedialog.asksaveasfile(
+            initialdir=self._chapters_file_path,
+            title="Select Chapters file",
+            filetypes=(("chapters files", "*.ch"),),
+        )
+        chapters_filename = ""
+        if selected_chapters_filename:
+            chapters_filename = selected_chapters_filename.name
+            self._chapters_file_path = str(Path(chapters_filename).parent)
+        return chapters_filename
+
     def request_chapters_filename(self) -> str:
         if not self._chapters_file_path:
             self._chapters_file_path = f"{Path.home()}/Videos/Computing"
@@ -257,7 +283,6 @@ class AppMainWindow(tk.Tk):
             self._chapters_file_path = f"{Path.home()}"
         selected_chapters_filename = filedialog.askopenfile(
             initialdir=self._chapters_file_path,
-            title="Select Chapters file",
             filetypes=(("chapters files", "*.ch"),),
         )
         chapters_filename = ""
@@ -308,6 +333,10 @@ class AppGuiBuilder:
         )
         self._view.menu_bar.bind_load_chapters_from_youtube_command(
             self._gui_controller.handle_load_chapters_from_youtube
+        )
+
+        self._view.menu_bar.bind_save_chapters_file_command(
+            self._gui_controller.handle_save_chapters_file_command
         )
 
     def create_chapters_panel_bindings(self):

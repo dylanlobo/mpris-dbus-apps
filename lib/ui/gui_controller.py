@@ -51,6 +51,9 @@ class AppInterface(Protocol):
     def bind_load_chapters_command(self, load_chapters_file_command: callable):
         ...
 
+    def bind_save_chapters_command(self, load_chapters_file_command: callable):
+        ...
+
     def bind_reload_chapters(self, reload_chapters: callable):
         ...
 
@@ -115,7 +118,7 @@ class GuiController:
 
     def _load_chapters_from_youtube(self):
         try:
-            (self._chapters_title, self._chapters) = helpers.load_chapters_from_youtube(
+            self._chapters_title, self._chapters = helpers.load_chapters_from_youtube(
                 video=self._chapters_yt_video
             )
         except Exception as e:
@@ -176,6 +179,14 @@ class GuiController:
                     partial(self.set_player_position, position)
                 )
         return (listbox_items, chapters_position_functions)
+
+    def handle_save_chapters_file_command(self):
+        chapters_filename = self._view.request_save_chapters_filename()
+        if not chapters_filename:
+            return
+        helpers.save_chapters_file(
+            chapters_filename, self._chapters_title, self._chapters
+        )
 
     def handle_load_chapters_file_command(self):
         chapters_filename = self._view.request_chapters_filename()
