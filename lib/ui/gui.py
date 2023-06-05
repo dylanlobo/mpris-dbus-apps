@@ -265,9 +265,7 @@ class AppMainWindow(tk.Tk):
             self._chapters_file_path = f"{Path.home()}"
         selected_chapters_filename = filedialog.asksaveasfile(
             initialdir=self._chapters_file_path,
-            title="Select Chapters file",
-            filetypes=(("chapters files", "*.ch"),),
-        )
+            title="Select Chapters file")
         return selected_chapters_filename
 
     def request_chapters_filename(self) -> str:
