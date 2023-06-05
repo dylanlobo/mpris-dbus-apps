@@ -184,8 +184,9 @@ class GuiController:
         return (listbox_items, chapters_position_functions)
 
     def handle_save_chapters_file_command(self):
+        suggested_filename = helpers.get_valid_filename(f"{self._chapters_title}.ch")
         chapters_filename = self._view.request_save_chapters_filename(
-            default_filename=f"{self._chapters_title}.ch"
+            default_filename=suggested_filename
         )
         if not chapters_filename:
             return
