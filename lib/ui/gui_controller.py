@@ -25,6 +25,9 @@ class AppInterface(Protocol):
     def request_chapters_filename(self) -> str:
         ...
 
+    def request_save_chapters_filename(self, default_filename: str = "ch.ch") -> str:
+        ...
+
     def get_youtube_video(self) -> str:
         ...
 
@@ -181,7 +184,9 @@ class GuiController:
         return (listbox_items, chapters_position_functions)
 
     def handle_save_chapters_file_command(self):
-        chapters_filename = self._view.request_save_chapters_filename()
+        chapters_filename = self._view.request_save_chapters_filename(
+            default_filename=f"{self._chapters_title}.ch"
+        )
         if not chapters_filename:
             return
         helpers.save_chapters_file(

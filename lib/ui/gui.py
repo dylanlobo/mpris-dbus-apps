@@ -256,7 +256,9 @@ class AppMainWindow(tk.Tk):
     def bind_clear_chapters(self, clear_chapters: callable):
         self.bind("<Control-l>", clear_chapters)
 
-    def request_save_chapters_filename(self) -> str:
+    def request_save_chapters_filename(
+        self, default_filename: str = "chapters.ch"
+    ) -> str:
         if not self._chapters_file_path:
             self._chapters_file_path = f"{Path.home()}/Videos/Computing"
         if not Path(self._chapters_file_path).exists():
@@ -265,7 +267,9 @@ class AppMainWindow(tk.Tk):
             self._chapters_file_path = f"{Path.home()}"
         selected_chapters_filename = filedialog.asksaveasfile(
             initialdir=self._chapters_file_path,
-            title="Select Chapters file")
+            title="Select Chapters file",
+            initialfile=default_filename,
+        )
         return selected_chapters_filename
 
     def request_chapters_filename(self) -> str:
