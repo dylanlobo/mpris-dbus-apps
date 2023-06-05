@@ -268,11 +268,7 @@ class AppMainWindow(tk.Tk):
             title="Select Chapters file",
             filetypes=(("chapters files", "*.ch"),),
         )
-        chapters_filename = ""
-        if selected_chapters_filename:
-            chapters_filename = selected_chapters_filename.name
-            self._chapters_file_path = str(Path(chapters_filename).parent)
-        return chapters_filename
+        return selected_chapters_filename
 
     def request_chapters_filename(self) -> str:
         if not self._chapters_file_path:
@@ -285,11 +281,7 @@ class AppMainWindow(tk.Tk):
             initialdir=self._chapters_file_path,
             filetypes=(("chapters files", "*.ch"),),
         )
-        chapters_filename = ""
-        if selected_chapters_filename:
-            chapters_filename = selected_chapters_filename.name
-            self._chapters_file_path = str(Path(chapters_filename).parent)
-        return chapters_filename
+        return selected_chapters_filename
 
     def select_new_player(self) -> PlayerProxy:
         running_player_names = PlayerFactory.get_running_player_names()

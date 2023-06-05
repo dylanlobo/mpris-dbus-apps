@@ -16,7 +16,7 @@ from lib.dbus_mpris.core import (
 from enum import IntEnum
 from functools import lru_cache
 from consolemenu import SelectionMenu
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, TextIO
 import lib.yt_ch as youtube_chapters
 
 logger = logging.getLogger(__name__)
@@ -135,24 +135,21 @@ def chapters_py_to_json(title: str, chapters: Dict[str, str]) -> str:
     return json.dumps(chapters_dict, indent=4)
 
 
-def load_chapters_file(chapters_file: str) -> Tuple[str, Dict[str, str]]:
-    if os.path.isfile(chapters_file) is False:
-        logger.error(f"{chapters_file} does not exist")
-        raise FileNotFoundError(f"{chapters_file} does not exist")
+def load_chapters_file(chapters_file: TextIO) -> Tuple[str, Dict[str, str]]:
     chapters = {}
     title = "Chapters"
     chapters_json = ""
-    with open(chapters_file, "r") as f:
-        chapters_json = f.read()
+    with chapters_file:
+        chapters_json = chapters_file.read()
 
     (title, chapters) = chapters_json_to_py(chapters_json)
     return title, chapters
 
 
-def save_chapters_file(chapters_file: str, title: str, chapters: Dict[str, str]):
+def save_chapters_file(chapters_file: TextIO, title: str, chapters: Dict[str, str]):
     json_str = chapters_py_to_json(title=title, chapters=chapters)
-    with open(chapters_file, "w") as f:
-        f.write(json_str)
+    with chapters_file:
+        chapters_file.write(json_str)
 
 
 def load_chapters_from_youtube(video: str):
