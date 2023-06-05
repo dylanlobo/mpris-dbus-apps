@@ -135,10 +135,17 @@ def chapters_py_to_json(title: str, chapters: Dict[str, str]) -> str:
     return json.dumps(chapters_dict, indent=4)
 
 
-def load_chapters_file(chapters_file: TextIO) -> Tuple[str, Dict[str, str]]:
+def load_chapters_file(chapters_file: str | TextIO) -> Tuple[str, Dict[str, str]]:
+    if not chapters_file:
+        raise FileNotFoundError()
     chapters = {}
     title = "Chapters"
     chapters_json = ""
+    if isinstance(chapters_file, str):
+        if os.path.isfile(chapters_file) is False:
+            logger.error(f"{chapters_file} does not exist")
+            raise FileNotFoundError(f"{chapters_file} does not exist")
+        chapters_file = open(chapters_file, "r")
     with chapters_file:
         chapters_json = chapters_file.read()
 
@@ -146,8 +153,17 @@ def load_chapters_file(chapters_file: TextIO) -> Tuple[str, Dict[str, str]]:
     return title, chapters
 
 
-def save_chapters_file(chapters_file: TextIO, title: str, chapters: Dict[str, str]):
+def save_chapters_file(
+    chapters_file: str | TextIO, title: str, chapters: Dict[str, str]
+):
+    if not chapters_file:
+        raise FileNotFoundError()
     json_str = chapters_py_to_json(title=title, chapters=chapters)
+    if isinstance(chapters_file, str):
+        if os.path.isfile(chapters_file) is False:
+            logger.error(f"{chapters_file} does not exist")
+            raise FileNotFoundError(f"{chapters_file} does not exist")
+        chapters_file = open(chapters_file, "w")
     with chapters_file:
         chapters_file.write(json_str)
 
