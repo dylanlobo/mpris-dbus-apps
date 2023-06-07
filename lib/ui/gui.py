@@ -3,12 +3,12 @@ import tkinter as tk
 from tkinter import filedialog
 from pathlib import Path
 from tkinter import ttk
-from . import ch_icon as icon
-from typing import List, Dict
+import lib.ui.ch_icon as icon
+from typing import List, Dict, Tuple
 from functools import partial
-from ..helpers import Direction
+import lib.helpers as helpers
 from lib.dbus_mpris.core import PlayerProxy, PlayerFactory, PlayerCreationError
-from .gui_controller import GuiController, AppInterface
+from lib.ui.gui_controller import GuiController, AppInterface
 
 logger = logging.getLogger(__name__)
 
@@ -256,9 +256,7 @@ class AppMainWindow(tk.Tk):
     def bind_clear_chapters(self, clear_chapters: callable):
         self.bind("<Control-l>", clear_chapters)
 
-    def request_save_chapters_filename(
-        self, default_filename: str = "chapters.ch"
-    ) -> str:
+    def request_save_chapters_file(self, default_filename: str = "chapters.ch") -> str:
         if not self._chapters_file_path:
             self._chapters_file_path = f"{Path.home()}/Videos/Computing"
         if not Path(self._chapters_file_path).exists():
@@ -272,7 +270,7 @@ class AppMainWindow(tk.Tk):
         )
         return selected_chapters_filename
 
-    def request_chapters_filename(self) -> str:
+    def request_chapters_file(self) -> str:
         if not self._chapters_file_path:
             self._chapters_file_path = f"{Path.home()}/Videos/Computing"
         if not Path(self._chapters_file_path).exists():
@@ -309,6 +307,7 @@ class AppGuiBuilder:
         else:
             self._player = player
         self._gui_controller = GuiController(self._view, self._player, self)
+        self._gui_controller.set_chapters_filename(chapters_filename)
 
     @property
     def chapters_gui_window(self) -> AppMainWindow:
@@ -333,10 +332,43 @@ class AppGuiBuilder:
             self._gui_controller.handle_save_chapters_file_command
         )
 
-    def create_chapters_panel_bindings(self):
-        if self._chapters_filename:
-            self._gui_controller.set_chapters_file(self._chapters_filename)
-            self._gui_controller.set_listbox_items()
+    def create_chapters_panel_bindings(
+        self, chapters_title: str, chapters: Dict[str, str]
+    ):
+        (
+            listbox_items,
+            chapters_position_functions,
+        ) = self._build_chapters_listbox_bindings(chapters)
+        self._create_listbox_items(
+            chapters_title, listbox_items, chapters_position_functions
+        )
+
+    def _build_chapters_listbox_bindings(
+        self, chapters: Dict[str, str]
+    ) -> Tuple[List[str], List[callable]]:
+        listbox_items: List[str] = []
+        chapters_position_functions: List[callable] = []
+        chapter: str
+        position: str
+        if chapters:
+            for index, (chapter, position) in enumerate(chapters.items()):
+                listbox_items.append(f"{index+1}.    {chapter} ({position})")
+                chapters_position_functions.append(
+                    partial(self._gui_controller.set_player_position, position)
+                )
+        return (listbox_items, chapters_position_functions)
+
+    def _create_listbox_items(
+        self,
+        chapters_title: str,
+        listbox_items: List[str],
+        chapters_position_functions: List[callable],
+    ):
+        self._view.set_main_window_title(chapters_title)
+        self._view.set_chapters(chapters=listbox_items)
+        self._view.bind_chapters_selection_commands(
+            chapters_selection_action_functs=chapters_position_functions
+        )
 
     def create_player_control_panel_bindings(self):
         button_action_funcs = {
@@ -348,17 +380,17 @@ class AppGuiBuilder:
             "<": partial(
                 self._gui_controller.skip_player,
                 offset="00:00:05",
-                direction=Direction.REVERSE,
+                direction=helpers.Direction.REVERSE,
             ),
             "<<": partial(
                 self._gui_controller.skip_player,
                 offset="00:00:10",
-                direction=Direction.REVERSE,
+                direction=helpers.Direction.REVERSE,
             ),
             "<<<": partial(
                 self._gui_controller.skip_player,
                 offset="00:01:00",
-                direction=Direction.REVERSE,
+                direction=helpers.Direction.REVERSE,
             ),
             "|<": self._gui_controller.previous_player,
         }
@@ -372,7 +404,9 @@ class AppGuiBuilder:
 def build_gui_menu(chapters_filename: str, player: PlayerProxy) -> AppMainWindow:
     gui_builder = AppGuiBuilder(chapters_filename, player)
     gui_builder.create_menu_bar_bindings()
-    gui_builder.create_chapters_panel_bindings()
+    if chapters_filename:
+        chapters_title, chapters = helpers.load_chapters_file(chapters_filename)
+        gui_builder.create_chapters_panel_bindings(chapters_title, chapters)
     gui_builder.create_player_control_panel_bindings()
     gui_builder.create_app_window_bindings()
     return gui_builder.chapters_gui_window

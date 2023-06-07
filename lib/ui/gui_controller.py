@@ -1,8 +1,7 @@
-from typing import Tuple, List, Dict, Protocol
+from typing import List, Dict, Protocol, TextIO
 from .. import helpers
 from lib.dbus_mpris.core import PlayerProxy
 import logging
-from functools import partial
 
 logger = logging.getLogger(__name__)
 
@@ -11,7 +10,9 @@ class AppGuiBuilderInterface(Protocol):
     def create_menu_bar_bindings(self):
         ...
 
-    def create_chapters_panel_bindings(self):
+    def create_chapters_panel_bindings(
+        self, chapters_title: str, chapters: Dict[str, str]
+    ):
         ...
 
     def create_player_control_panel_bindings(self):
@@ -22,10 +23,10 @@ class AppInterface(Protocol):
     def set_main_window_title(self, media_title: str):
         ...
 
-    def request_chapters_filename(self) -> str:
+    def request_chapters_file(self) -> TextIO:
         ...
 
-    def request_save_chapters_filename(self, default_filename: str = "ch.ch") -> str:
+    def request_save_chapters_file(self, default_filename: str = "ch.ch") -> TextIO:
         ...
 
     def get_youtube_video(self) -> str:
@@ -80,9 +81,8 @@ class GuiController:
         self._initialiase_chapters_content()
 
     def _initialiase_chapters_content(self):
-        self._chapters_file_name: str = ""
-        self._chapters_yt_video: str = ""
-        self._chapters_title: str = "Chapters Player"
+        self._chapters_filename: str = None
+        self._chapters_yt_video: str = None
         self._chapters: Dict[str, str] = {}
 
     @property
@@ -94,30 +94,11 @@ class GuiController:
         self._cur_player = player
         self._view.set_player_instance_name(player.ext_name)
 
-    @property
-    def chapters_position_funcs(self):
-        return self._chapter_position_funcs
-
-    @chapters_position_funcs.setter
-    def chapters_position_funcs(self, funcs_list: List[callable]):
-        self._chapters_position_funcs = funcs_list
-
-    def set_chapters_file(self, filename: str):
-        self._chapters_file_name = filename
-        self._load_chapters_file()
-
-    def _load_chapters_file(self):
-        try:
-            self._chapters_title, self._chapters = helpers.load_chapters_file(
-                self._chapters_file_name
-            )
-        except Exception as e:
-            logger.error(e)
-            raise e
+    def set_chapters_filename(self, filename: str):
+        self._chapters_filename = filename
 
     def set_chapters_yt_video(self, video: str):
         self._chapters_yt_video = video
-        self._load_chapters_from_youtube()
 
     def _load_chapters_from_youtube(self):
         try:
@@ -127,17 +108,6 @@ class GuiController:
         except Exception as e:
             logger.error(e)
             raise e
-
-    def set_listbox_items(self):
-        (
-            listbox_items,
-            chapters_position_functions,
-        ) = self.get_chapters_listbox_contents()
-        self._view.set_main_window_title(self._chapters_title)
-        self._view.set_chapters(chapters=listbox_items)
-        self._view.bind_chapters_selection_commands(
-            chapters_selection_action_functs=chapters_position_functions
-        )
 
     def chapters_listbox_selection_handler(self, event):
         selection = event.widget.curselection()
@@ -168,44 +138,33 @@ class GuiController:
         if new_player:
             self.cur_player = new_player
 
-    def get_chapters_listbox_contents(
-        self,
-    ) -> Tuple[str, Dict[str, str], List[callable]]:
-        listbox_items: List[str] = []
-        chapters_position_functions: List[callable] = []
-        chapter: str
-        position: str
-        if self._chapters:
-            for index, (chapter, position) in enumerate(self._chapters.items()):
-                listbox_items.append(f"{index+1}.    {chapter} ({position})")
-                chapters_position_functions.append(
-                    partial(self.set_player_position, position)
-                )
-        return (listbox_items, chapters_position_functions)
-
     def handle_save_chapters_file_command(self):
         suggested_filename = helpers.get_valid_filename(f"{self._chapters_title}.ch")
-        chapters_filename = self._view.request_save_chapters_filename(
+        chapters_file = self._view.request_save_chapters_file(
             default_filename=suggested_filename
         )
-        if not chapters_filename:
+        if not chapters_file:
             return
-        helpers.save_chapters_file(
-            chapters_filename, self._chapters_title, self._chapters
-        )
+        self._chapters_filename = chapters_file.name
+        helpers.save_chapters_file(chapters_file, self._chapters_title, self._chapters)
 
     def handle_load_chapters_file_command(self):
-        chapters_filename = self._view.request_chapters_filename()
-        if not chapters_filename:
+        chapters_file = self._view.request_chapters_file()
+        if not chapters_file:
             return
+        self._chapters_filename = chapters_file.name
         try:
-            self.set_chapters_file(chapters_filename)
+            self._chapters_title, self._chapters = helpers.load_chapters_file(
+                chapters_file
+            )
         except (FileNotFoundError, ValueError) as e:
             logger.error(e)
             # TODO Implement and make call to view object to display error
             # message popup before returning
             return
-        self.set_listbox_items()
+        self._gui_builder.create_chapters_panel_bindings(
+            self._chapters_title, self._chapters
+        )
 
     def handle_load_chapters_from_youtube(self):
         video_name = self._view.get_youtube_video()
@@ -214,26 +173,35 @@ class GuiController:
         video_name = video_name.strip()
         if not video_name:
             return
+        self.set_chapters_yt_video(video_name)
         try:
-            self.set_chapters_yt_video(video_name)
+            self._chapters_title, self._chapters = helpers.load_chapters_from_youtube(
+                video=self._chapters_yt_video
+            )
         except Exception as e:
             logger.error(e)
             # TODO Implement and make call to view object to display error
             # message popup before returning
             return
-        self.set_listbox_items()
+        self._gui_builder.create_chapters_panel_bindings(
+            self._chapters_title, self._chapters
+        )
 
     def handle_reload_chapters(self, event):
-        if self._chapters_file_name:
+        if self._chapters_filename:
             try:
-                self.set_chapters_file(self._chapters_file_name)
+                self._chapters_title, self._chapters = helpers.load_chapters_file(
+                    self._chapters_filename
+                )
             except (FileNotFoundError, ValueError) as e:
                 logger.error(e)
                 # TODO Implement and make call to view object to display error
                 # message popup before returning
                 return
-            self.set_listbox_items()
+            self._gui_builder.create_chapters_panel_bindings(
+                self._chapters_title, self._chapters
+            )
 
     def handle_clear_chapters(self, event):
         self._initialiase_chapters_content()
-        self.set_listbox_items()
+        self._gui_builder.create_chapters_panel_bindings("Chapters Player", {})
