@@ -1,4 +1,4 @@
-from typing import List, Dict, Protocol, TextIO
+from typing import List, Dict, Protocol, TextIO, Tuple
 from .. import helpers
 from lib.dbus_mpris.core import PlayerProxy
 import logging
@@ -83,6 +83,7 @@ class GuiController:
     def _initialiase_chapters_content(self):
         self._chapters_filename: str = None
         self._chapters_yt_video: str = None
+        self._chapters_title = "Chapters Player"
         self._chapters: Dict[str, str] = {}
 
     @property
@@ -138,6 +139,20 @@ class GuiController:
         if new_player:
             self.cur_player = new_player
 
+    def load_chapters_file(
+        self, chapters_file: str | TextIO
+    ) -> Tuple[str, Dict[str, str]]:
+        if chapters_file:
+            try:
+                self._chapters_title, self._chapters = helpers.load_chapters_file(
+                    chapters_file
+                )
+            except (FileNotFoundError, ValueError) as e:
+                logger.error(e)
+                # TODO Implement and make call to view object to display error
+                # message popup before returning
+        return self._chapters_title, self._chapters
+
     def handle_save_chapters_file_command(self):
         suggested_filename = helpers.get_valid_filename(f"{self._chapters_title}.ch")
         chapters_file = self._view.request_save_chapters_file(
@@ -153,15 +168,7 @@ class GuiController:
         if not chapters_file:
             return
         self._chapters_filename = chapters_file.name
-        try:
-            self._chapters_title, self._chapters = helpers.load_chapters_file(
-                chapters_file
-            )
-        except (FileNotFoundError, ValueError) as e:
-            logger.error(e)
-            # TODO Implement and make call to view object to display error
-            # message popup before returning
-            return
+        self.load_chapters_file(chapters_file)
         self._gui_builder.create_chapters_panel_bindings(
             self._chapters_title, self._chapters
         )
@@ -189,19 +196,11 @@ class GuiController:
 
     def handle_reload_chapters(self, event):
         if self._chapters_filename:
-            try:
-                self._chapters_title, self._chapters = helpers.load_chapters_file(
-                    self._chapters_filename
-                )
-            except (FileNotFoundError, ValueError) as e:
-                logger.error(e)
-                # TODO Implement and make call to view object to display error
-                # message popup before returning
-                return
-            self._gui_builder.create_chapters_panel_bindings(
-                self._chapters_title, self._chapters
-            )
+            self.load_chapters_file(self._chapters_filename)
+        self._gui_builder.create_chapters_panel_bindings(
+            self._chapters_title, self._chapters
+        )
 
     def handle_clear_chapters(self, event):
         self._initialiase_chapters_content()
-        self._gui_builder.create_chapters_panel_bindings("Chapters Player", {})
+        self._gui_builder.create_chapters_panel_bindings()

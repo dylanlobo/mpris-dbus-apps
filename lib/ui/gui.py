@@ -333,7 +333,7 @@ class AppGuiBuilder:
         )
 
     def create_chapters_panel_bindings(
-        self, chapters_title: str, chapters: Dict[str, str]
+        self, chapters_title: str = "Chapters Title", chapters: Dict[str, str] = {}
     ):
         (
             listbox_items,
@@ -400,16 +400,24 @@ class AppGuiBuilder:
         self._view.bind_reload_chapters(self._gui_controller.handle_reload_chapters)
         self._view.bind_clear_chapters(self._gui_controller.handle_clear_chapters)
 
+    def build(self):
+        self.create_menu_bar_bindings()
+        chapters_title: str = ""
+        chapters: Dict[str, str] = {}
+        if self._chapters_filename:
+            chapters_title, chapters = self._gui_controller.load_chapters_file(
+                self._chapters_filename
+            )
+        self.create_chapters_panel_bindings(chapters_title, chapters)
+        self.create_player_control_panel_bindings()
+        self.create_app_window_bindings()
+        return self.chapters_gui_window
+
 
 def build_gui_menu(chapters_filename: str, player: PlayerProxy) -> AppMainWindow:
     gui_builder = AppGuiBuilder(chapters_filename, player)
-    gui_builder.create_menu_bar_bindings()
-    if chapters_filename:
-        chapters_title, chapters = helpers.load_chapters_file(chapters_filename)
-        gui_builder.create_chapters_panel_bindings(chapters_title, chapters)
-    gui_builder.create_player_control_panel_bindings()
-    gui_builder.create_app_window_bindings()
-    return gui_builder.chapters_gui_window
+    gui_window = gui_builder.build()
+    return gui_window
 
 
 class YoutubeChaptersPopup:
