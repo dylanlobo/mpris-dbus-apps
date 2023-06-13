@@ -1,6 +1,6 @@
 from typing import List, Dict, Protocol, TextIO, Tuple
 from .. import helpers
-from lib.dbus_mpris.core import PlayerProxy
+from lib.dbus_mpris.player import PlayerProxy
 import logging
 
 logger = logging.getLogger(__name__)

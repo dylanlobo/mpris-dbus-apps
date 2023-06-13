@@ -4,7 +4,7 @@ from consolemenu import ConsoleMenu
 from consolemenu.items import FunctionItem
 from consolemenu.items import SubmenuItem
 from typing import Any
-from ..dbus_mpris.core import Player
+from ..dbus_mpris.player import Player
 from .. import helpers as mpris_helpers
 
 logger = logging.getLogger(__name__)

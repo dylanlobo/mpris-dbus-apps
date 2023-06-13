@@ -3,7 +3,7 @@ import logging
 from typing import Dict, Any
 
 import lib.dbus_mpris.helpers as mpris_helpers
-from lib.dbus_mpris.core import PlayerFactory
+from lib.dbus_mpris.player import PlayerFactory
 
 logger = logging.getLogger(__name__)
 

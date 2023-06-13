@@ -9,7 +9,7 @@ import argparse
 import logging
 
 import lib.helpers as mpris_helpers
-from lib.dbus_mpris.core import (
+from lib.dbus_mpris.player import (
     PlayerCreationError,
     NoValidMprisPlayersError,
     PlayerFactory,

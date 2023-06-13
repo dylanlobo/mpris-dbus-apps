@@ -2,7 +2,7 @@
 Sets the playback time position, in the currently playing track.
 """
 
-from lib.dbus_mpris.core import PlayerFactory
+from lib.dbus_mpris.player import PlayerFactory
 import lib.dbus_mpris.helpers as mpris_helpers
 import logging
 import argparse

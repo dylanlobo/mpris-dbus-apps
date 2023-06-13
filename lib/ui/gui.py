@@ -7,7 +7,7 @@ import lib.ui.ch_icon as icon
 from typing import List, Dict, Tuple
 from functools import partial
 import lib.helpers as helpers
-from lib.dbus_mpris.core import PlayerProxy, PlayerFactory, PlayerCreationError
+from lib.dbus_mpris.player import PlayerProxy, PlayerFactory, PlayerCreationError
 from lib.ui.gui_controller import GuiController, AppInterface
 
 logger = logging.getLogger(__name__)

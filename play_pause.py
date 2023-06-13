@@ -1,6 +1,6 @@
 """Toggles the play/pause state of the selected player instance"""
 import lib.dbus_mpris.helpers as mpris_helpers
-from lib.dbus_mpris.core import PlayerFactory
+from lib.dbus_mpris.player import PlayerFactory
 import argparse
 import logging
 

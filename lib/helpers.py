@@ -6,7 +6,7 @@ import re
 import logging
 import os
 import json
-from lib.dbus_mpris.core import (
+from lib.dbus_mpris.player import (
     PlayerCreationError,
     NoValidMprisPlayersError,
     Player,
