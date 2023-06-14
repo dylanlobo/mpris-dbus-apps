@@ -19,7 +19,7 @@ class AppGuiBuilderInterface(Protocol):
         ...
 
 
-class AppInterface(Protocol):
+class GuiAppInterface(Protocol):
     def set_main_window_title(self, media_title: str):
         ...
 
@@ -71,7 +71,7 @@ class AppInterface(Protocol):
 class GuiController:
     def __init__(
         self,
-        view: AppInterface,
+        view: GuiAppInterface,
         cur_player: PlayerProxy,
         app_gui_builder: AppGuiBuilderInterface,
     ):

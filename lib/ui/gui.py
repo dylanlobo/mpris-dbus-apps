@@ -8,7 +8,7 @@ from typing import List, Dict, Tuple
 from functools import partial
 import lib.helpers as helpers
 from lib.dbus_mpris.player import PlayerProxy, PlayerFactory, PlayerCreationError
-from lib.ui.gui_controller import GuiController, AppInterface
+from lib.ui.gui_controller import GuiController, GuiAppInterface
 
 logger = logging.getLogger(__name__)
 
@@ -301,7 +301,7 @@ class AppGuiBuilder:
         self._chapters_filename = chapters_filename
         self._player_control_panel: PlayerControlPanel = None
         self._chapters_panel: ChaptersPanel = None
-        self._view: AppInterface = AppMainWindow("Chapters Player")
+        self._view: GuiAppInterface = AppMainWindow("Chapters Player")
         if not player:
             self._player = PlayerProxy(None)
         else:
