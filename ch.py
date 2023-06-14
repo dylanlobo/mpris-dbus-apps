@@ -31,10 +31,12 @@ def main():
         if len(running_players) == 1:
             player_names = list(running_players.keys())
             selected_player_name = player_names[0]
+            selected_player_fq_name = running_players[selected_player_name]
             logger.debug("Creating player")
-            selected_player = mpris_helpers.get_player(
-                selected_player_name, running_players
+            selected_player = PlayerFactory.get_player(
+                selected_player_fq_name, selected_player_name
             )
+
             logger.debug("Created player")
     except PlayerCreationError as e:
         print(e)
