@@ -32,6 +32,15 @@ class ChaptersMenuConsole:
 
 class ChaptersMenuConsoleBuilder:
     def __init__(self, chapters_filename: str, player: Player) -> None:
+        self._player = player
+        self.load_chapters_file(chapters_filename=chapters_filename)
+        self._chapters_menu_console = ChaptersMenuConsole(title=self._chapters_title)
+
+    @property
+    def chapters_menu_console(self) -> ChaptersMenuConsole:
+        return self._chapters_menu_console
+
+    def load_chapters_file(self, chapters_filename: str):
         try:
             self._chapters_title, self._chapters = mpris_helpers.load_chapters_file(
                 chapters_filename
@@ -40,14 +49,10 @@ class ChaptersMenuConsoleBuilder:
             logger.error(fe)
             raise fe
 
-        self._chapters_menu_console = ChaptersMenuConsole(title=self._chapters_title)
-        self._player = player
-
-    @property
-    def chapters_menu_console(self) -> ChaptersMenuConsole:
-        return self._chapters_menu_console
-
     def build_complete_setup(self) -> None:
+        """Builds a ChaptersConsoleMenu with all possible features enabled.
+        Useful for interactive testing of all features"""
+
         self.build_reload_chapters_item()
         self.build_player_control_menu()
         self.build_chapters_menu()
