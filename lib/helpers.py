@@ -7,15 +7,11 @@ import logging
 import os
 import json
 from lib.dbus_mpris.player import (
-    PlayerCreationError,
-    NoValidMprisPlayersError,
     Player,
-    PlayerFactory,
 )
 from enum import IntEnum
 from functools import lru_cache
-from consolemenu import SelectionMenu
-from typing import List, Dict, Tuple, TextIO
+from typing import Dict, Tuple, TextIO
 import lib.yt_ch as youtube_chapters
 
 logger = logging.getLogger(__name__)
@@ -56,28 +52,6 @@ def is_player_useable(player: Player) -> bool:
     if player.can_control and player.can_seek:
         return True
     return False
-
-
-def get_player(player_name: str, running_players: Dict[str, str]) -> Player:
-    """Returns a wrapped dbus mpris object instance of the specified player instance.
-
-    :param player_name: a string containing the name a running player instance.
-        Eg. rhythmbox
-    :param running_players: a dictionary containing running player names.
-        The key is the unqualified player instance name and the value is
-        the fully qualified player name.
-        Eg. {"rhythmbox","org.mpris.MediaPlayer2.rhythmbox"}
-    :returns: a dbus.Interface("org.mpris.MediaPlayer2.Player") instance of the
-        specified player instance name.
-    """
-    mpris_player_name = running_players[player_name]
-    player = None
-    try:
-        player = PlayerFactory.get_player(mpris_player_name, player_name)
-    except PlayerCreationError as e:
-        logger.error(e)
-        raise e
-    return player
 
 
 @lru_cache
@@ -200,76 +174,3 @@ def load_chapters_from_youtube(video: str):
     _, chapters_json = youtube_chapters.get_chapters_json(video)
     (title, chapters) = chapters_json_to_py(chapters_json)
     return title, chapters
-
-
-def get_selected_player(running_players: Dict[str, str]) -> Player:
-    """Select a player to connect to.
-    :param running_players:  A dictionary containing names of running
-    mpris enabled players.The key is the unqualified player instance name
-    and value is the fully qualified player instance name.
-    :returns: A valid Player instance on successful completion.
-    :raises: NoValidMprisPlayersError exception if no valid MPRIS enable players
-    are available.
-    """
-    if not running_players:
-        raise ValueError("running_players is empty.")
-
-    selected_player_name = ""
-    player: Player
-    player_names = list(running_players.keys())
-    if len(player_names) == 1:
-        selected_player_name = player_names[0]
-    else:
-        selected_player_name = user_select_player(player_names)
-
-    player = get_player(selected_player_name, running_players)
-
-    while not is_player_useable(player):
-        player_names.remove(selected_player_name)
-        if not player_names:
-            msg = f"{selected_player_name} is not useable. \
-            No other mpris enabled players are currently running."
-            logger.error(msg)
-            raise NoValidMprisPlayersError(msg)
-
-        if user_try_another_player():
-            selected_player_name = user_select_player(player_names)
-            player = get_player(selected_player_name, running_players)
-        else:
-            raise NoValidMprisPlayersError
-    return player
-
-
-def user_try_another_player() -> bool:
-    """Interactive prompt informing the user that their existing player
-    selection is not valid and requesting the user to choose a different player"""
-    while True:
-        answer = input(
-            "The selected player does not implement required MPRIS functionality.\n \
-                Select another player? Yes[y] or "
-            "No[n] default[y]: "
-        )
-        answer = answer.lower()
-        if answer in ("", "y", "yes"):
-            return True
-        elif answer in ("n", "no"):
-            return False
-
-
-def user_select_player(player_names: List[str]) -> str:
-    """Presents the user with an interactive console to select a mpris enabled player
-    instance.
-
-    :param: player_names -- a list containing the names of the mpris enabled player \
-        instances.
-    :returns: a string containing the player name selected by the user"""
-
-    if not isinstance(player_names, list):
-        raise TypeError("player_names is not a list")
-
-    selection = SelectionMenu.get_selection(
-        title="Select a player to connect to:",
-        strings=player_names,
-        show_exit_option=False,
-    )
-    return player_names[selection]

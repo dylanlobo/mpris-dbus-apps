@@ -7,7 +7,12 @@ import lib.ui.ch_icon as icon
 from typing import List, Dict, Tuple
 from functools import partial
 import lib.helpers as helpers
-from lib.dbus_mpris.player import PlayerProxy, PlayerFactory, PlayerCreationError
+from lib.dbus_mpris.player import (
+    Player,
+    PlayerProxy,
+    PlayerFactory,
+    PlayerCreationError,
+)
 from lib.ui.gui_controller import GuiController, GuiAppInterface
 
 logger = logging.getLogger(__name__)
@@ -414,7 +419,22 @@ class AppGuiBuilder:
         return self.chapters_gui_window
 
 
-def build_gui_menu(chapters_filename: str, player: PlayerProxy) -> AppMainWindow:
+def build_gui_menu(chapters_filename: str) -> AppMainWindow:
+    running_players = PlayerFactory.get_running_player_names()
+    player: Player = None
+    try:
+        if len(running_players) == 1:
+            player_names = list(running_players.keys())
+            selected_player_name = player_names[0]
+            selected_player_fq_name = running_players[selected_player_name]
+            logger.debug("Creating player")
+            player = PlayerFactory.get_player(
+                selected_player_fq_name, selected_player_name
+            )
+
+            logger.debug("Created player")
+    except PlayerCreationError as e:
+        print(e)
     gui_builder = AppGuiBuilder(chapters_filename, player)
     gui_window = gui_builder.build()
     return gui_window

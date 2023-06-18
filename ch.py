@@ -8,11 +8,9 @@ to the running player.
 import argparse
 import logging
 
-import lib.helpers as mpris_helpers
 from lib.dbus_mpris.player import (
     PlayerCreationError,
     NoValidMprisPlayersError,
-    PlayerFactory,
 )
 from lib.ui.console_ui import build_console_menu
 from lib.ui.gui import build_gui_menu
@@ -23,38 +21,12 @@ logger = logging.getLogger(__name__)
 
 
 def main():
-    arguments = get_arguments()
-    running_players = PlayerFactory.get_running_player_names()
-    selected_player = None
-    chapters_file = arguments.f
+    arguments: argparse.Namespace = get_arguments()
     try:
-        if len(running_players) == 1:
-            player_names = list(running_players.keys())
-            selected_player_name = player_names[0]
-            selected_player_fq_name = running_players[selected_player_name]
-            logger.debug("Creating player")
-            selected_player = PlayerFactory.get_player(
-                selected_player_fq_name, selected_player_name
-            )
-
-            logger.debug("Created player")
-    except PlayerCreationError as e:
-        print(e)
-    if not arguments.c:
-        launch_gui(chapters_file, selected_player)
-        return
-    try:
-        if len(running_players) == 0:
-            print("No mpris enabled players are running.")
-            return
-        if not selected_player:
-            logger.debug("Creating player")
-            selected_player = mpris_helpers.get_selected_player(running_players)
-            logger.debug("Created player")
-        chapters_file = arguments.f
-        if not chapters_file:
-            raise FileNotFoundError()
-        launch_console(arguments, chapters_file, selected_player)
+        if arguments.c:
+            launch_console(arguments)
+        else:
+            launch_gui(arguments)
 
     except (NoValidMprisPlayersError, PlayerCreationError) as err:
         print(err)
@@ -68,21 +40,27 @@ def main():
     return
 
 
-def launch_gui(chapters_file=None, player=None):
-    gui_window = build_gui_menu(chapters_file, player)
+def launch_gui(arguments: argparse.Namespace):
+    chapters_file: str = None
+    if arguments.f:
+        chapters_file = arguments.f
+    gui_window = build_gui_menu(chapters_file)
     gui_window.show_display()
 
 
-def launch_console(arguments, chapters_file, selected_player):
+def launch_console(arguments: argparse.Namespace):
+    chapters_file = arguments.f
+    if not chapters_file:
+        raise FileNotFoundError()
+
     chapters_console_menu = build_console_menu(
         chapters_file=chapters_file,
-        player=selected_player,
         reload_option=arguments.r,
         player_controls_option=arguments.p,
     )
     chapters_console_menu.display_menu()
     if chapters_console_menu.reload_chapters_on_exit:
-        launch_console(arguments, chapters_file, selected_player)
+        launch_console(arguments)
 
 
 def get_arguments() -> argparse.Namespace:
