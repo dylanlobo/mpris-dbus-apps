@@ -160,27 +160,6 @@ def user_select_player(player_names: List[str]) -> str:
     return player_names[selection]
 
 
-def get_player(player_name: str, running_players: Dict[str, str]) -> Player:
-    """Returns a wrapped dbus mpris object instance of the specified player instance.
-    :param player_name: a string containing the name a running player instance.
-        Eg. rhythmbox
-    :param running_players: a dictionary containing running player names.
-        The key is the unqualified player instance name and the value is
-        the fully qualified player name.
-        Eg. {"rhythmbox","org.mpris.MediaPlayer2.rhythmbox"}
-    :returns: a dbus.Interface("org.mpris.MediaPlayer2.Player") instance of the
-        specified player instance name.
-    """
-    mpris_player_name = running_players[player_name]
-    player = None
-    try:
-        player = PlayerFactory.get_player(mpris_player_name, player_name)
-    except PlayerCreationError as e:
-        logger.error(e)
-        raise e
-    return player
-
-
 def get_selected_player(running_players: Dict[str, str]) -> Player:
     """Select a player to connect to.
     :param running_players:  A dictionary containing names of running
@@ -201,7 +180,10 @@ def get_selected_player(running_players: Dict[str, str]) -> Player:
     else:
         selected_player_name = user_select_player(player_names)
 
-    player = get_player(selected_player_name, running_players)
+    player = PlayerFactory.get_player(
+        fq_player_name=running_players[selected_player_name],
+        short_player_name=selected_player_name,
+    )
 
     while not is_player_useable(player):
         player_names.remove(selected_player_name)
@@ -213,7 +195,10 @@ def get_selected_player(running_players: Dict[str, str]) -> Player:
 
         if user_try_another_player():
             selected_player_name = user_select_player(player_names)
-            player = get_player(selected_player_name, running_players)
+            player = PlayerFactory.get_player(
+                fq_player_name=running_players[selected_player_name],
+                short_player_name=selected_player_name,
+            )
         else:
             raise NoValidMprisPlayersError
     return player
