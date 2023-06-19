@@ -35,6 +35,9 @@ class GuiAppInterface(Protocol):
     def set_chapters(self, chapters: List[str]):
         ...
 
+    def set_chapters_file_path(self, chapters_file_path: str):
+        ...
+
     def set_player_instance_name(self, instance_name):
         ...
 

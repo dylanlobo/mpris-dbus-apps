@@ -4,7 +4,7 @@ from tkinter import filedialog
 from pathlib import Path
 from tkinter import ttk
 import lib.ui.ch_icon as icon
-from typing import List, Dict, Tuple
+from typing import List, Dict, TextIO, Tuple
 from functools import partial
 import lib.helpers as helpers
 from lib.dbus_mpris.player import (
@@ -229,6 +229,9 @@ class AppMainWindow(tk.Tk):
     def set_chapters(self, chapters: List[str]):
         self._chapters_panel.set_chapters(chapters=chapters)
 
+    def set_chapters_file_path(self, chapters_file_path: str):
+        self._chapters_file_path = chapters_file_path
+
     def bind_chapters_selection_commands(
         self, chapters_selection_action_functs: List[callable]
     ):
@@ -261,32 +264,40 @@ class AppMainWindow(tk.Tk):
     def bind_clear_chapters(self, clear_chapters: callable):
         self.bind("<Control-l>", clear_chapters)
 
-    def request_save_chapters_file(self, default_filename: str = "chapters.ch") -> str:
+    def request_save_chapters_file(
+        self, default_filename: str = "chapters.ch"
+    ) -> TextIO:
         if not self._chapters_file_path:
             self._chapters_file_path = f"{Path.home()}/Videos/Computing"
         if not Path(self._chapters_file_path).exists():
             self._chapters_file_path = f"{Path.home()}/Videos"
         if not Path(self._chapters_file_path).exists():
             self._chapters_file_path = f"{Path.home()}"
-        selected_chapters_filename = filedialog.asksaveasfile(
+        selected_chapters_file = filedialog.asksaveasfile(
             initialdir=self._chapters_file_path,
             title="Select Chapters file",
             initialfile=default_filename,
         )
-        return selected_chapters_filename
+        if selected_chapters_file:
+            dir = (Path(selected_chapters_file.name)).parent.absolute()
+            self._chapters_file_path = str(dir)
+        return selected_chapters_file
 
-    def request_chapters_file(self) -> str:
+    def request_chapters_file(self) -> TextIO:
         if not self._chapters_file_path:
             self._chapters_file_path = f"{Path.home()}/Videos/Computing"
         if not Path(self._chapters_file_path).exists():
             self._chapters_file_path = f"{Path.home()}/Videos"
         if not Path(self._chapters_file_path).exists():
             self._chapters_file_path = f"{Path.home()}"
-        selected_chapters_filename = filedialog.askopenfile(
+        selected_chapters_file = filedialog.askopenfile(
             initialdir=self._chapters_file_path,
             filetypes=(("chapters files", "*.ch"),),
         )
-        return selected_chapters_filename
+        if selected_chapters_file:
+            dir = (Path(selected_chapters_file.name)).parent.absolute()
+            self._chapters_file_path = str(dir)
+        return selected_chapters_file
 
     def select_new_player(self) -> PlayerProxy:
         running_player_names = PlayerFactory.get_running_player_names()
@@ -413,6 +424,8 @@ class AppGuiBuilder:
             chapters_title, chapters = self._gui_controller.load_chapters_file(
                 self._chapters_filename
             )
+            dir = (Path(self._chapters_filename)).parent.absolute()
+            self._view.set_chapters_file_path(str(dir))
         self.create_chapters_panel_bindings(chapters_title, chapters)
         self.create_player_control_panel_bindings()
         self.create_app_window_bindings()
