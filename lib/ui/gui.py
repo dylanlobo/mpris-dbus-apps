@@ -357,7 +357,7 @@ class AppGuiBuilder:
         )
 
     def create_chapters_panel_bindings(
-        self, chapters_title: str, chapters: Dict[str, str] = {}
+        self, chapters_title: str = "", chapters: Dict[str, str] = {}
     ):
         (
             listbox_items,
