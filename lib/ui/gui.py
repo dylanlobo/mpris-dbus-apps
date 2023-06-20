@@ -175,10 +175,11 @@ class AppMainWindow(tk.Tk):
     """The main window for the application. In addation, this class implements a view
     protocol (AppInterface) as part of an MVP implementation"""
 
-    def __init__(self, media_title: str):
+    def __init__(self):
         super().__init__(className="Chapters")
         self.bind("<Escape>", self._handle_escape_pressed)
-        self.title(media_title)
+        self._default_title = "Chapters"
+        self.title(self._default_title)
         icon.apply_icon(self)
         self.wm_title()
         self._menu_bar = AppMenuBar(self)
@@ -225,7 +226,10 @@ class AppMainWindow(tk.Tk):
         self.mainloop()
 
     def set_main_window_title(self, media_title: str):
-        self.title(media_title)
+        if media_title:
+            self.title(media_title)
+        else:
+            self.title(self._default_title)
 
     def set_player_instance_name(self, instance_name):
         self._player_control_panel.set_player_instance_name(instance_name)
@@ -321,7 +325,7 @@ class AppGuiBuilder:
         self._chapters_filename = chapters_filename
         self._player_control_panel: PlayerControlPanel = None
         self._chapters_panel: ChaptersPanel = None
-        self._view: GuiAppInterface = AppMainWindow("Chapters Player")
+        self._view: GuiAppInterface = AppMainWindow()
         if not player:
             self._player = PlayerProxy(None)
         else:
@@ -353,7 +357,7 @@ class AppGuiBuilder:
         )
 
     def create_chapters_panel_bindings(
-        self, chapters_title: str = "Chapters Title", chapters: Dict[str, str] = {}
+        self, chapters_title: str, chapters: Dict[str, str] = {}
     ):
         (
             listbox_items,
