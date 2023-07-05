@@ -122,7 +122,7 @@ def get_arguments() -> argparse.Namespace:
         choices=["classic","themed"],
         required=False,
         default="themed",
-        help="Launch gui in classic or themed mode",
+        help="Launch gui in classic or themed mode.",
     )
     arguments = parser.parse_args()
     return arguments
