@@ -13,7 +13,7 @@ from lib.dbus_mpris.player import (
     NoValidMprisPlayersError,
 )
 from lib.ui.console_ui import build_console_menu
-from lib.ui.gui import build_gui_menu
+from lib.ui.gui_builder import AppMainWindow, build_gui_menu, GuiMode
 
 # logging.basicConfig(filename="log.txt", filemode="w", level=logging.DEBUG)
 logging.basicConfig(level=logging.INFO)
@@ -42,9 +42,14 @@ def main():
 
 def launch_gui(arguments: argparse.Namespace):
     chapters_file: str = None
+    gui_window:AppMainWindow = None
     if arguments.f:
         chapters_file = arguments.f
-    gui_window = build_gui_menu(chapters_file)
+    if arguments.g == "themed":
+        gui_window = build_gui_menu(chapters_file,GuiMode.THEMED)
+    else:
+        gui_window = build_gui_menu(chapters_file,GuiMode.CLASSIC)
+            
     gui_window.show_display()
 
 
@@ -111,6 +116,13 @@ def get_arguments() -> argparse.Namespace:
         required=False,
         default=False,
         help="Launch in console mode (terminal interface).",
+    )
+    parser.add_argument(
+        "-g",
+        choices=["classic","themed"],
+        required=False,
+        default="themed",
+        help="Launch gui in classic or themed mode",
     )
     arguments = parser.parse_args()
     return arguments
