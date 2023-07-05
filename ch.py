@@ -42,14 +42,14 @@ def main():
 
 def launch_gui(arguments: argparse.Namespace):
     chapters_file: str = None
-    gui_window:AppMainWindow = None
+    gui_window: AppMainWindow = None
     if arguments.f:
         chapters_file = arguments.f
     if arguments.g == "themed":
-        gui_window = build_gui_menu(chapters_file,GuiMode.THEMED)
+        gui_window = build_gui_menu(chapters_file, GuiMode.THEMED)
     else:
-        gui_window = build_gui_menu(chapters_file,GuiMode.CLASSIC)
-            
+        gui_window = build_gui_menu(chapters_file, GuiMode.CLASSIC)
+
     gui_window.show_display()
 
 
@@ -119,7 +119,7 @@ def get_arguments() -> argparse.Namespace:
     )
     parser.add_argument(
         "-g",
-        choices=["classic","themed"],
+        choices=["classic", "themed"],
         required=False,
         default="themed",
         help="Launch gui in classic or themed mode.",

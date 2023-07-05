@@ -1,6 +1,6 @@
 from enum import IntEnum
 from functools import partial
-from typing import Tuple,List,Dict,Protocol
+from typing import Tuple, List, Dict, Protocol
 from pathlib import Path
 from lib.ui.gui_controller import GuiController
 import lib.helpers as helpers
@@ -12,13 +12,12 @@ from lib.dbus_mpris.player import (
     PlayerCreationError,
 )
 import logging
-logger = logging.getLogger(__name__)
 
+logger = logging.getLogger(__name__)
 
 
 class AppMainWindow(Protocol):
     """The main window protocol class for the application."""
-
 
     def show_display(self):
         ...
@@ -26,17 +25,21 @@ class AppMainWindow(Protocol):
 
 class GuiMode(IntEnum):
     CLASSIC = 1
-    THEMED =  2
-
-
+    THEMED = 2
 
 
 class AppGuiBuilder:
-    def __init__(self, chapters_filename: str, player: PlayerProxy, mode:GuiMode = GuiMode.THEMED):
+    def __init__(
+        self,
+        chapters_filename: str,
+        player: PlayerProxy,
+        mode: GuiMode = GuiMode.THEMED,
+    ):
         self._chapters_filename = chapters_filename
-        self._view: AppMainWindow = None 
-        if mode == GuiMode.THEMED: 
+        self._view: AppMainWindow = None
+        if mode == GuiMode.THEMED:
             import lib.ui.gui_themed as gui_themed
+
             self._view = gui_themed.AppMainWindowThemed()
         else:
             self._view = gui_classic.AppMainWindowClassic()
@@ -46,8 +49,6 @@ class AppGuiBuilder:
             self._player = player
         self._gui_controller = GuiController(self._view, self._player, self)
         self._gui_controller.set_chapters_filename(chapters_filename)
-
-
 
     def create_menu_bar_bindings(self):
         self._view.menu_bar.bind_connect_to_player_command(
@@ -148,7 +149,9 @@ class AppGuiBuilder:
         return self._view
 
 
-def build_gui_menu(chapters_filename: str, mode: GuiMode=GuiMode.THEMED) -> gui_classic.AppMainWindowClassic:
+def build_gui_menu(
+    chapters_filename: str, mode: GuiMode = GuiMode.THEMED
+) -> gui_classic.AppMainWindowClassic:
     running_players = PlayerFactory.get_running_player_names()
     player: Player = None
     try:
@@ -164,6 +167,6 @@ def build_gui_menu(chapters_filename: str, mode: GuiMode=GuiMode.THEMED) -> gui_
             logger.debug("Created player")
     except PlayerCreationError as e:
         print(e)
-    gui_builder = AppGuiBuilder(chapters_filename, player,mode)
+    gui_builder = AppGuiBuilder(chapters_filename, player, mode)
     gui_window = gui_builder.build()
     return gui_window

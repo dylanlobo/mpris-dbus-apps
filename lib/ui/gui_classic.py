@@ -4,7 +4,7 @@ from tkinter import filedialog
 from pathlib import Path
 from tkinter import ttk
 import lib.ui.ch_icon as icon
-from typing import List, Dict, TextIO 
+from typing import List, Dict, TextIO
 from lib.dbus_mpris.player import (
     PlayerProxy,
     PlayerFactory,
@@ -314,8 +314,6 @@ class AppMainWindowClassic(tk.Tk):
         self._yt_video_popup = YoutubeChaptersPopup(master=self)
         video = self._yt_video_popup.get_video()
         return video
-
-
 
 
 class YoutubeChaptersPopup:
