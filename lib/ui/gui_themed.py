@@ -31,6 +31,7 @@ class ChaptersPanel(ttk.LabelFrame):
         self._chapters = chapters
         self._chapter_selection_action_functs = chapters_selection_action_functs
         self._lb = ttk.Treeview(self, height=10, selectmode="browse", show="tree")
+        self._lb.column("#0", minwidth=1024, stretch=True)
         self.insert_chapters((chapters))
         self._chapters_lb = self._lb
         self._lb.grid(column=0, row=0, sticky="NWES")
@@ -204,6 +205,7 @@ class AppMainWindowThemed(ttk.Window):
         )
         self._player_control_panel = PlayerControlPanel(self)
         self._chapters_file_path = None
+        self.resizable(False, False)
 
     @property
     def menu_bar(self):
