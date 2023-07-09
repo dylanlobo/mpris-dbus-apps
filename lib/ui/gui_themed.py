@@ -6,16 +6,12 @@ from pathlib import Path
 # from tkinter import ttk
 import ttkbootstrap as ttk
 import lib.ui.ch_icon as icon
-from typing import List, Dict, TextIO, Tuple
-from functools import partial
-import lib.helpers as helpers
+from typing import List, Dict, TextIO
 from lib.dbus_mpris.player import (
-    Player,
     PlayerProxy,
     PlayerFactory,
     PlayerCreationError,
 )
-from lib.ui.gui_controller import GuiController, GuiAppInterface
 
 logger = logging.getLogger(__name__)
 
@@ -30,9 +26,10 @@ class ChaptersPanel(ttk.LabelFrame):
         super().__init__(master, text="Chapters")
         self._chapters = chapters
         self._chapter_selection_action_functs = chapters_selection_action_functs
-        self._lb = ttk.Treeview(self, height=10, selectmode="browse", show="tree")
-        self._lb.column("#0", minwidth=1024, stretch=True)
-        self.insert_chapters((chapters))
+        lb_height = 10
+        self._lb = tk.Listbox(
+            self, listvariable=tk.StringVar(value=chapters), width=60, height=lb_height
+        )
         self._chapters_lb = self._lb
         self._lb.grid(column=0, row=0, sticky="NWES")
         sv = ttk.Scrollbar(self, orient=tk.VERTICAL, command=self._lb.yview)
@@ -42,25 +39,15 @@ class ChaptersPanel(ttk.LabelFrame):
         sh.grid(column=0, row=1, sticky="EW")
         self._lb["xscrollcommand"] = sh.set
         self._lb.bind("<Return>", self.lb_selection_handler)
-        # self._lb.bind("<ButtonRelease-3>", self.lb_right_button_handler)
-        # self._lb.bind("<ButtonRelease-3>", self.lb_selection_handler, add="+")
         self._lb.bind("<Button-3>", self.lb_right_button_handler)
         self._lb.bind("<Button-3>", self.lb_selection_handler, add="+")
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
-        self.grid(column=0, row=0, sticky="NWES")
-
-    def insert_chapters(self, chapters: List[str]):
-        for chapter in chapters:
-            self._chapters_lb.insert("", "end", text=chapter)
-
-    def delete_chapters(self):
-        for i in self._chapters_lb.get_children():
-            self._chapters_lb.delete(i)
+        self.grid(sticky="NWES")
 
     def set_chapters(self, chapters: List[str]):
-        self.delete_chapters()
-        self.insert_chapters(chapters)
+        self._chapters_lb.delete(0, tk.END)
+        self._chapters_lb.insert(tk.END, *chapters)
 
     def bind_chapters_selection_commands(
         self, chapters_selection_action_functs: List[callable]
@@ -68,17 +55,16 @@ class ChaptersPanel(ttk.LabelFrame):
         self._chapter_selection_action_functs = chapters_selection_action_functs
 
     def lb_right_button_handler(self, event):
-        s = self._lb.selection()
-        self._lb.selection_remove(s)
-        iid = self._lb.identify_row(event.y)
-        if iid:
-            self._lb.selection_set(iid)
-            self._lb.focus_set()
+        self._lb.selection_clear(0, tk.END)
+        self._lb.focus_set()
+        self._lb.selection_set(self._lb.nearest(event.y))
+        self._lb.activate(self._lb.nearest(event.y))
 
     def lb_selection_handler(self, event):
-        selected_iid = self._lb.selection()[0]
-        index = self._lb.index(selected_iid)
-        self._chapter_selection_action_functs[index]()
+        selection = event.widget.curselection()
+        if selection:
+            index = selection[0]
+            self._chapter_selection_action_functs[index]()
 
 
 def ignore_arguments(func):
@@ -188,7 +174,6 @@ class AppMainWindowThemed(ttk.Window):
     protocol (AppInterface) as part of an MVP implementation"""
 
     def __init__(self):
-        # super().__init__(className="Chapters")
         super().__init__(themename="darkly")
         self.bind("<Escape>", self._handle_escape_pressed)
         self._default_title = "Chapters"
@@ -205,7 +190,6 @@ class AppMainWindowThemed(ttk.Window):
         )
         self._player_control_panel = PlayerControlPanel(self)
         self._chapters_file_path = None
-        self.resizable(False, False)
 
     @property
     def menu_bar(self):
@@ -332,147 +316,6 @@ class AppMainWindowThemed(ttk.Window):
         self._yt_video_popup = YoutubeChaptersPopup(master=self)
         video = self._yt_video_popup.get_video()
         return video
-
-
-class AppGuiBuilder:
-    def __init__(self, chapters_filename: str, player: PlayerProxy):
-        self._chapters_filename = chapters_filename
-        self._player_control_panel: PlayerControlPanel = None
-        self._chapters_panel: ChaptersPanel = None
-        self._view: GuiAppInterface = AppMainWindowThemed()
-        if not player:
-            self._player = PlayerProxy(None)
-        else:
-            self._player = player
-        self._gui_controller = GuiController(self._view, self._player, self)
-        self._gui_controller.set_chapters_filename(chapters_filename)
-
-    @property
-    def chapters_gui_window(self) -> AppMainWindowThemed:
-        return self._view
-
-    @property
-    def player(self) -> PlayerProxy:
-        return self._player
-
-    def create_menu_bar_bindings(self):
-        self._view.menu_bar.bind_connect_to_player_command(
-            self._gui_controller.handle_connection_command
-        )
-        self._view.menu_bar.bind_load_chapters_file_command(
-            self._gui_controller.handle_load_chapters_file_command
-        )
-        self._view.menu_bar.bind_load_chapters_from_youtube_command(
-            self._gui_controller.handle_load_chapters_from_youtube
-        )
-
-        self._view.menu_bar.bind_save_chapters_file_command(
-            self._gui_controller.handle_save_chapters_file_command
-        )
-
-    def create_chapters_panel_bindings(
-        self, chapters_title: str = "", chapters: Dict[str, str] = {}
-    ):
-        (
-            listbox_items,
-            chapters_position_functions,
-        ) = self._build_chapters_listbox_bindings(chapters)
-        self._create_listbox_items(
-            chapters_title, listbox_items, chapters_position_functions
-        )
-
-    def _build_chapters_listbox_bindings(
-        self, chapters: Dict[str, str]
-    ) -> Tuple[List[str], List[callable]]:
-        listbox_items: List[str] = []
-        chapters_position_functions: List[callable] = []
-        chapter: str
-        position: str
-        if chapters:
-            for index, (chapter, position) in enumerate(chapters.items()):
-                listbox_items.append(f"{index+1}.    {chapter} ({position})")
-                chapters_position_functions.append(
-                    partial(self._gui_controller.set_player_position, position)
-                )
-        return (listbox_items, chapters_position_functions)
-
-    def _create_listbox_items(
-        self,
-        chapters_title: str,
-        listbox_items: List[str],
-        chapters_position_functions: List[callable],
-    ):
-        self._view.set_main_window_title(chapters_title)
-        self._view.set_chapters(chapters=listbox_items)
-        self._view.bind_chapters_selection_commands(
-            chapters_selection_action_functs=chapters_position_functions
-        )
-
-    def create_player_control_panel_bindings(self):
-        button_action_funcs = {
-            "Play/Pause": self._gui_controller.play_pause_player,
-            ">|": self._gui_controller.next_player,
-            ">": partial(self._gui_controller.skip_player, offset="00:00:05"),
-            ">>": partial(self._gui_controller.skip_player, offset="00:00:10"),
-            ">>>": partial(self._gui_controller.skip_player, offset="00:01:00"),
-            "<": partial(
-                self._gui_controller.skip_player,
-                offset="00:00:05",
-                direction=helpers.Direction.REVERSE,
-            ),
-            "<<": partial(
-                self._gui_controller.skip_player,
-                offset="00:00:10",
-                direction=helpers.Direction.REVERSE,
-            ),
-            "<<<": partial(
-                self._gui_controller.skip_player,
-                offset="00:01:00",
-                direction=helpers.Direction.REVERSE,
-            ),
-            "|<": self._gui_controller.previous_player,
-        }
-        self._view.bind_player_controls_commands(button_action_funcs)
-
-    def create_app_window_bindings(self):
-        self._view.bind_reload_chapters(self._gui_controller.handle_reload_chapters)
-        self._view.bind_clear_chapters(self._gui_controller.handle_clear_chapters)
-
-    def build(self):
-        self.create_menu_bar_bindings()
-        chapters_title: str = ""
-        chapters: Dict[str, str] = {}
-        if self._chapters_filename:
-            chapters_title, chapters = self._gui_controller.load_chapters_file(
-                self._chapters_filename
-            )
-            dir = (Path(self._chapters_filename)).parent.absolute()
-            self._view.set_chapters_file_path(str(dir))
-        self.create_chapters_panel_bindings(chapters_title, chapters)
-        self.create_player_control_panel_bindings()
-        self.create_app_window_bindings()
-        return self.chapters_gui_window
-
-
-def build_gui_menu(chapters_filename: str) -> AppMainWindowThemed:
-    running_players = PlayerFactory.get_running_player_names()
-    player: Player = None
-    try:
-        if len(running_players) == 1:
-            player_names = list(running_players.keys())
-            selected_player_name = player_names[0]
-            selected_player_fq_name = running_players[selected_player_name]
-            logger.debug("Creating player")
-            player = PlayerFactory.get_player(
-                selected_player_fq_name, selected_player_name
-            )
-
-            logger.debug("Created player")
-    except PlayerCreationError as e:
-        print(e)
-    gui_builder = AppGuiBuilder(chapters_filename, player)
-    gui_window = gui_builder.build()
-    return gui_window
 
 
 class YoutubeChaptersPopup:
