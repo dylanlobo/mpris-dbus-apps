@@ -139,28 +139,31 @@ class AppMenuBar(tk.Menu):
         self._main_window.config(menu=self)
 
         self._connection_menu = tk.Menu(self, tearoff=0)
-        self.add_cascade(label="Connect", menu=self._connection_menu)
+        self.add_cascade(label="Player", menu=self._connection_menu, underline=0)
 
         self._themes_menu = tk.Menu(self, tearoff=0)
-        self.add_cascade(label="Theme", menu=self._themes_menu)
+        self.add_cascade(label="Theme", menu=self._themes_menu, underline=0)
 
         self._chapters_menu = tk.Menu(self, tearoff=0)
-        self.add_cascade(label="Load/Save", menu=self._chapters_menu)
+        self.add_cascade(label="Load/Save", menu=self._chapters_menu, underline=0)
 
     def bind_connect_to_player_command(self, connect_player_command: callable):
         self._connection_menu.add_command(
-            label="Connect to player ...",
-            command=connect_player_command,
+            label="Select a player ...", command=connect_player_command, underline=0
         )
 
     def bind_save_chapters_file_command(self, save_chapters_file_command: callable):
         self._chapters_menu.add_command(
-            label="Save chapters file ...", command=save_chapters_file_command
+            label="Save chapters file ...",
+            command=save_chapters_file_command,
+            underline=0,
         )
 
     def bind_load_chapters_file_command(self, load_chapters_file_command: callable):
         self._chapters_menu.add_command(
-            label="Load chapters file ...", command=load_chapters_file_command
+            label="Load chapters file ...",
+            command=load_chapters_file_command,
+            underline=0,
         )
 
     def bind_load_chapters_from_youtube_command(
@@ -169,11 +172,14 @@ class AppMenuBar(tk.Menu):
         self._chapters_menu.add_command(
             label="Load chapters from Youtube ...",
             command=load_chapters_from_youtube_command,
+            underline=19,
         )
 
     def bind_theme_selection_command(self, load_theme_selection_command: callable):
         self._themes_menu.add_command(
-            label="Select a theme ...", command=load_theme_selection_command
+            label="Select a theme ...",
+            command=load_theme_selection_command,
+            underline=0,
         )
 
 
