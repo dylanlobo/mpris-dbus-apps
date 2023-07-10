@@ -141,8 +141,11 @@ class AppMenuBar(tk.Menu):
         self._connection_menu = tk.Menu(self, tearoff=0)
         self.add_cascade(label="Connect", menu=self._connection_menu)
 
+        self._themes_menu = tk.Menu(self, tearoff=0)
+        self.add_cascade(label="Theme", menu=self._themes_menu)
+
         self._chapters_menu = tk.Menu(self, tearoff=0)
-        self.add_cascade(label="Chapters", menu=self._chapters_menu)
+        self.add_cascade(label="Load/Save", menu=self._chapters_menu)
 
     def bind_connect_to_player_command(self, connect_player_command: callable):
         self._connection_menu.add_command(
@@ -168,6 +171,11 @@ class AppMenuBar(tk.Menu):
             command=load_chapters_from_youtube_command,
         )
 
+    def bind_theme_selection_command(self, load_theme_selection_command: callable):
+        self._themes_menu.add_command(
+            label="Select a theme ...", command=load_theme_selection_command
+        )
+
 
 class AppMainWindowThemed(ttk.Window):
     """The main window for the application. In addation, this class implements a view
@@ -190,6 +198,8 @@ class AppMainWindowThemed(ttk.Window):
         )
         self._player_control_panel = PlayerControlPanel(self)
         self._chapters_file_path = None
+        self._supported_themes = self.get_themes()
+        self._menu_bar.bind_theme_selection_command(self.select_theme)
 
     @property
     def menu_bar(self):
@@ -228,6 +238,16 @@ class AppMainWindowThemed(ttk.Window):
             self.title(media_title)
         else:
             self.title(self._default_title)
+
+    def get_themes(self):
+        s = ttk.Style()
+        return s.theme_names()
+
+    def set_theme(self, theme_name: str):
+        if theme_name:
+            style = ttk.Style(theme=theme_name)
+            style.theme_use(theme_name)
+            self.update()
 
     def set_player_instance_name(self, instance_name):
         self._player_control_panel.set_player_instance_name(instance_name)
@@ -316,6 +336,15 @@ class AppMainWindowThemed(ttk.Window):
         self._yt_video_popup = YoutubeChaptersPopup(master=self)
         video = self._yt_video_popup.get_video()
         return video
+
+    def select_theme(self) -> str:
+        if not self._supported_themes:
+            self._supported_themes = self.get_themes()
+        self._theme_selection_popup = ThemeSelectionPopup(
+            self, themes=self._supported_themes
+        )
+        self._selected_theme = self._theme_selection_popup.select_theme()
+        self.set_theme(self._selected_theme)
 
 
 class YoutubeChaptersPopup:
@@ -486,6 +515,86 @@ class PlayerConnectionPopup:
 
     def _handle_enter_pressed(self, event):
         self._handle_connect_command()
+
+    def _handle_escape_pressed(self, event):
+        self._handle_cancel_command()
+
+
+class ThemeSelectionPopup:
+    def __init__(self, master: tk.Tk, themes: List):
+        self._master: tk.Tk = master
+        self._supported_themes: List = themes
+        self._selected_theme: str = None
+
+    def select_theme(self) -> str:
+        self._popup = tk.Toplevel(self._master)
+        self._popup.title("Select a Theme")
+        self._popup.bind("<Return>", self._handle_enter_pressed)
+        self._popup.bind("<Escape>", self._handle_escape_pressed)
+        self._create_theme_selection_panel()
+        self._popup.resizable(width=False, height=False)
+        self._popup.grid()
+        # set to be on top of the main window
+        self._popup.transient(self._master)
+        # hijack all commands from the master (clicks on the main window are ignored)
+        self._popup.grab_set()
+        self._master.wait_window(
+            self._popup
+        )  # pause anything on the main window until this one closes
+        return self._selected_theme
+
+    def _create_theme_selection_panel(self):
+        themes_panel = ttk.LabelFrame(master=self._popup, text="Themes")
+        lb_height = 5
+        self._themes_listbox = tk.Listbox(
+            master=themes_panel,
+            listvariable=tk.StringVar(value=self._supported_themes),
+            width=20,
+            height=lb_height,
+        )
+        self._themes_listbox.grid(column=0, row=0, sticky="NWES")
+        self._themes_listbox.select_set(0)
+        sv = ttk.Scrollbar(
+            themes_panel, orient=tk.VERTICAL, command=self._themes_listbox.yview
+        )
+        sv.grid(column=1, row=0, sticky="NS")
+        self._themes_listbox["yscrollcommand"] = sv.set
+        sh = ttk.Scrollbar(
+            themes_panel, orient=tk.HORIZONTAL, command=self._themes_listbox.xview
+        )
+        sh.grid(column=0, row=1, sticky="EW")
+        self._themes_listbox["xscrollcommand"] = sh.set
+        themes_panel.grid_columnconfigure(0, weight=1)
+        themes_panel.grid_rowconfigure(0, weight=1)
+        themes_panel.grid(padx=0, pady=5)
+
+        button_panel = tk.Frame(master=self._popup)
+        connect_button = ttk.Button(
+            master=button_panel, text="Select", command=self._handle_selection_command
+        )
+        cancel_button = ttk.Button(
+            master=button_panel, text="Cancel", command=self._handle_cancel_command
+        )
+        connect_button.grid(row=0, column=1, padx=10)
+        cancel_button.grid(row=0, column=2, padx=10)
+        button_panel.grid_columnconfigure(0, weight=1)
+        button_panel.grid_rowconfigure(0, weight=1)
+        button_panel.grid(pady=10)
+        connect_button.focus_force()
+
+    def _handle_selection_command(self):
+        self._selected_theme = self._themes_listbox.get(tk.ACTIVE)
+        self._popup.destroy()
+
+    def _handle_cancel_command(self):
+        self._new_player = None
+        self._popup.destroy()
+
+    def _handle_ok_command(self):
+        self._popup.destroy()
+
+    def _handle_enter_pressed(self, event):
+        self._handle_selection_command()
 
     def _handle_escape_pressed(self, event):
         self._handle_cancel_command()
