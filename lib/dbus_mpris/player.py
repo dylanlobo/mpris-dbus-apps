@@ -600,6 +600,8 @@ class Player_pydbus(Player):
 
 
 class PlayerFactory:
+    unuseable_player_names = []
+
     @staticmethod
     def get_running_player_names() -> Dict[str, str]:
         """Retrieves media player instances names of currently running
@@ -607,7 +609,7 @@ class PlayerFactory:
         returns: a dictionary. The dictionary key is the unqualified
         player instance name and value is the fully qualified player name."""
 
-        running_players = {}
+        running_player_names = {}
         media_player_prefix = "org.mpris.MediaPlayer2"
         media_player_prefix_len = len(media_player_prefix)
         try:
@@ -623,9 +625,18 @@ class PlayerFactory:
 
         for service in all_service_names:
             if media_player_prefix in service:
+                if service in PlayerFactory.unuseable_player_names:
+                    continue
                 service_suffix = service[media_player_prefix_len + 1 :]
-                running_players[service_suffix] = str(service)
-        return running_players
+                try:
+                    # Not all org.mpris.MediaPlayer2 instances are useable
+                    # Attempting (relatively cheap) player creation to
+                    # exclude unusable players
+                    PlayerFactory.get_player(str(service), service_suffix)
+                    running_player_names[service_suffix] = str(service)
+                except PlayerCreationError:
+                    PlayerFactory.unuseable_player_names.append(str(service))
+        return running_player_names
 
     @staticmethod
     def get_player(fq_player_name, short_player_name) -> Player:
