@@ -183,12 +183,13 @@ class AppMenuBar(tk.Menu):
         )
 
 
-class AppMainWindowThemed(ttk.Window):
+class AppMainWindowThemed(ttk.tk.Tk):
     """The main window for the application. In addation, this class implements a view
     protocol (AppInterface) as part of an MVP implementation"""
 
     def __init__(self):
-        super().__init__(themename="darkly")
+        super().__init__(className="Chapters")
+        ttk.Style("darkly")
         self.bind("<Escape>", self._handle_escape_pressed)
         self._default_title = "Chapters"
         self.title(self._default_title)
@@ -202,7 +203,9 @@ class AppMainWindowThemed(ttk.Window):
             chapters=self._chapters_listbox_items,
             chapters_selection_action_functs=self._chapters_position_functions,
         )
-        self._player_control_panel = PlayerControlPanel(self)
+        self._player_panel_background = ttk.Frame(self)
+        self._player_control_panel = PlayerControlPanel(self._player_panel_background)
+        self._player_panel_background.grid()
         self._chapters_file_path = None
         self._supported_themes = self.get_themes()
         self._menu_bar.bind_theme_selection_command(self.select_theme)
