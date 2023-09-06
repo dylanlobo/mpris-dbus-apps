@@ -80,10 +80,11 @@ def ignore_arguments(func):
 
 
 class PlayerControlPanel(ttk.LabelFrame):
-    def __init__(self, master: tk.Tk):
+    def __init__(self, root: tk.Tk, master: tk.Frame):
         self._default_title = "Player Controls"
         super().__init__(master, text=self._default_title)
         self._master = master
+        self._root = root
         self._buttons = []
         self._buttons.append(ttk.Button(self, text="|<", width=3))
         self._buttons.append(ttk.Button(self, text="<<<", width=4))
@@ -115,12 +116,12 @@ class PlayerControlPanel(ttk.LabelFrame):
         for button in self._buttons:
             button_name = button.cget("text")
             button.configure(command=player_controls_funcs[button_name])
-            self._master.bind(
+            self._root.bind(
                 "<p>",
                 ignore_arguments(player_controls_funcs["Play/Pause"]),
             )
             if button_name in self._button_to_key_dict:
-                self._master.bind(
+                self._root.bind(
                     self._button_to_key_dict[button_name],
                     ignore_arguments(player_controls_funcs[button_name]),
                 )
@@ -204,7 +205,9 @@ class AppMainWindowThemed(ttk.tk.Tk):
             chapters_selection_action_functs=self._chapters_position_functions,
         )
         self._player_panel_background = ttk.Frame(self)
-        self._player_control_panel = PlayerControlPanel(self._player_panel_background)
+        self._player_control_panel = PlayerControlPanel(
+            root=self, master=self._player_panel_background
+        )
         self._player_panel_background.grid()
         self._chapters_file_path = None
         self._supported_themes = self.get_themes()
