@@ -132,6 +132,9 @@ class AppGuiBuilder:
     def create_app_window_bindings(self):
         self._view.bind_reload_chapters(self._gui_controller.handle_reload_chapters)
         self._view.bind_clear_chapters(self._gui_controller.handle_clear_chapters)
+        self._view.bind_select_player_shortcut(
+            self._gui_controller.handle_connection_command
+        )
 
     def build(self):
         self.create_menu_bar_bindings()

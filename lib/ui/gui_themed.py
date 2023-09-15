@@ -302,6 +302,9 @@ class AppMainWindowThemed(ttk.tk.Tk):
     def bind_clear_chapters(self, clear_chapters: callable):
         self.bind("<Control-l>", clear_chapters)
 
+    def bind_select_player_shortcut(self, select_player: callable):
+        self.bind("<s>", select_player)
+
     def request_save_chapters_file(
         self, default_filename: str = "chapters.ch"
     ) -> TextIO:
@@ -505,7 +508,7 @@ class PlayerConnectionPopup:
         button_panel.grid_columnconfigure(0, weight=1)
         button_panel.grid_rowconfigure(0, weight=1)
         button_panel.grid(pady=10)
-        connect_button.focus_force()
+        self._players_listbox.focus_force()
 
     def _handle_connect_command(self):
         player_name = self._players_listbox.get(tk.ACTIVE)

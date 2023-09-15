@@ -137,7 +137,7 @@ class GuiController:
     def previous_player(self):
         self._cur_player.previous()
 
-    def handle_connection_command(self):
+    def handle_connection_command(self, event=None):
         new_player = self._view.select_new_player()
         if new_player:
             self.cur_player = new_player
