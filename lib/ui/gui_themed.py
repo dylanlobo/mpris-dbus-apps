@@ -302,6 +302,9 @@ class AppMainWindowThemed(ttk.tk.Tk):
     def bind_clear_chapters(self, clear_chapters: callable):
         self.bind("<Control-l>", clear_chapters)
 
+    def bind_save_chapters(self, save_chapters: callable):
+        self.bind("<Control-s>", save_chapters)
+
     def bind_select_player_shortcut(self, select_player: callable):
         self.bind("<s>", select_player)
 

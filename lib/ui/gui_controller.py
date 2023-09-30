@@ -156,7 +156,7 @@ class GuiController:
                 # message popup before returning
         return self._chapters_title, self._chapters
 
-    def handle_save_chapters_file_command(self):
+    def handle_save_chapters_file_command(self, even=None):
         suggested_filename = helpers.get_valid_filename(f"{self._chapters_title}.ch")
         chapters_file = self._view.request_save_chapters_file(
             default_filename=suggested_filename

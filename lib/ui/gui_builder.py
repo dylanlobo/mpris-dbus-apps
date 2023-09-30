@@ -135,6 +135,9 @@ class AppGuiBuilder:
         self._view.bind_select_player_shortcut(
             self._gui_controller.handle_connection_command
         )
+        self._view.bind_save_chapters(
+            self._gui_controller.handle_save_chapters_file_command
+            )
 
     def build(self):
         self.create_menu_bar_bindings()
