@@ -84,8 +84,13 @@ class AppGuiBuilder:
         chapter: str
         position: str
         if chapters:
-            for index, (chapter, position) in enumerate(chapters.items()):
-                listbox_items.append(f"{index+1}.    {chapter} ({position})")
+            n_items = len(chapters)
+            for i, (chapter, position) in enumerate(chapters.items()):
+                if n_items >= 10:
+                    index = f"0{i+1}" if i < 9 else f"{i+1}"
+                else:
+                    index = f"{i+1}"
+                listbox_items.append(f"{index}.  {chapter} ({position})")
                 chapters_position_functions.append(
                     partial(self._gui_controller.set_player_position, position)
                 )
@@ -137,7 +142,7 @@ class AppGuiBuilder:
         )
         self._view.bind_save_chapters(
             self._gui_controller.handle_save_chapters_file_command
-            )
+        )
 
     def build(self):
         self.create_menu_bar_bindings()
