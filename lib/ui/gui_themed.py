@@ -31,6 +31,9 @@ class ChaptersPanel(ttk.LabelFrame):
             self, listvariable=tk.StringVar(value=chapters), width=60, height=lb_height
         )
         self._chapters_lb = self._lb
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+        self.grid(sticky="NWES")
         self._lb.grid(column=0, row=0, sticky="NWES")
         sv = ttk.Scrollbar(self, orient=tk.VERTICAL, command=self._lb.yview)
         sv.grid(column=1, row=0, sticky="NS")
@@ -41,9 +44,6 @@ class ChaptersPanel(ttk.LabelFrame):
         self._lb.bind("<Return>", self.lb_selection_handler)
         self._lb.bind("<Button-3>", self.lb_right_button_handler)
         self._lb.bind("<Button-3>", self.lb_selection_handler, add="+")
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(0, weight=1)
-        self.grid(sticky="NWES")
 
     def set_chapters(self, chapters: List[str]):
         self._chapters_lb.delete(0, tk.END)
