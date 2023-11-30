@@ -26,24 +26,25 @@ class ChaptersPanel(ttk.LabelFrame):
         super().__init__(master, text="Chapters")
         self._chapters = chapters
         self._chapter_selection_action_functs = chapters_selection_action_functs
-        lb_height = 10
+        lb_height = 11
         self._lb = tk.Listbox(
-            self, listvariable=tk.StringVar(value=chapters), width=60, height=lb_height
+            self, listvariable=tk.StringVar(value=chapters), width=75, height=lb_height
         )
         self._chapters_lb = self._lb
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
         self.grid(sticky="NWES")
-        self._lb.grid(column=0, row=0, sticky="NWES")
+        self._lb.grid(column=0, row=0, sticky="nesw")
         sv = ttk.Scrollbar(self, orient=tk.VERTICAL, command=self._lb.yview)
-        sv.grid(column=1, row=0, sticky="NS")
+        sv.grid(column=1, row=0, sticky="ns")
         self._lb["yscrollcommand"] = sv.set
         sh = ttk.Scrollbar(self, orient=tk.HORIZONTAL, command=self._lb.xview)
-        sh.grid(column=0, row=1, sticky="EW")
+        sh.grid(column=0, row=1, sticky="ew")
         self._lb["xscrollcommand"] = sh.set
         self._lb.bind("<Return>", self.lb_selection_handler)
         self._lb.bind("<Button-3>", self.lb_right_button_handler)
         self._lb.bind("<Button-3>", self.lb_selection_handler, add="+")
+        self.grid(padx=2, sticky="nsew")
 
     def set_chapters(self, chapters: List[str]):
         self._chapters_lb.delete(0, tk.END)
@@ -80,11 +81,12 @@ def ignore_arguments(func):
 
 
 class PlayerControlPanel(ttk.LabelFrame):
-    def __init__(self, root: tk.Tk, master: tk.Frame):
+    def __init__(self, root: tk.Tk):
         self._default_title = "Player Controls"
-        super().__init__(master, text=self._default_title)
-        self._master = master
-        self._root = root
+        super().__init__(root, text=self._default_title)
+        self._root = root.winfo_toplevel()
+        self.columnconfigure(9, weight=1)
+        self.rowconfigure(0, weight=1)
         self._buttons = []
         self._buttons.append(ttk.Button(self, text="|<", width=3))
         self._buttons.append(ttk.Button(self, text="<<<", width=4))
@@ -96,9 +98,10 @@ class PlayerControlPanel(ttk.LabelFrame):
         self._buttons.append(ttk.Button(self, text=">>>", width=4))
         self._buttons.append(ttk.Button(self, text=">|", width=3))
         self._init_button_to_key_dict()
-        for i in range(len(self._buttons)):
-            self._buttons[i].grid(row=0, column=(i + 1), padx=5, pady=10)
-        self.grid(padx=10, pady=10)
+        n_buttons = len(self._buttons)
+        for i in range(0, n_buttons):
+            self._buttons[i].grid(row=0, column=i, padx=5, pady=5)
+        self.grid(padx=2, pady=2, sticky="nesw")
 
     def _init_button_to_key_dict(self):
         self._button_to_key_dict = {
@@ -190,6 +193,7 @@ class AppMainWindowThemed(ttk.tk.Tk):
 
     def __init__(self):
         super().__init__(className="Chapters")
+        self.geometry("625x310")
         ttk.Style("darkly")
         self.bind("<Escape>", self._handle_escape_pressed)
         self._default_title = "Chapters"
@@ -197,18 +201,22 @@ class AppMainWindowThemed(ttk.tk.Tk):
         icon.apply_icon(self)
         self.wm_title()
         self._menu_bar = AppMenuBar(self)
+        self._chapters_place_panel = ttk.Frame(self)
+        self._player_control_place_panel = ttk.Frame(self)
         self._chapters_listbox_items = []
         self._chapters_position_functions = []
         self._chapters_panel = ChaptersPanel(
-            self,
+            self._chapters_place_panel,
             chapters=self._chapters_listbox_items,
-            chapters_selection_action_functs=self._chapters_position_functions,
-        )
-        self._player_panel_background = ttk.Frame(self)
-        self._player_control_panel = PlayerControlPanel(
-            root=self, master=self._player_panel_background
-        )
-        self._player_panel_background.grid()
+            chapters_selection_action_functs=self._chapters_position_functions
+            )
+        self._player_control_panel = PlayerControlPanel(root=self._player_control_place_panel)
+        # place the ChaptersPanel and PlayerControlPanel in the main window
+        self._chapters_place_panel.place(relx=0, rely=0, relwidth=1, relheight=0.8)
+        self._player_control_place_panel.place(
+            relx=0, rely=0.8,
+            relwidth=1, relheight=0.2
+            )
         self._chapters_file_path = None
         self._supported_themes = self.get_themes()
         self._menu_bar.bind_theme_selection_command(self.select_theme)
