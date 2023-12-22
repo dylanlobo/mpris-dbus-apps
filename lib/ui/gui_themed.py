@@ -210,7 +210,9 @@ class AppMainWindowThemed(ttk.tk.Tk):
             chapters=self._chapters_listbox_items,
             chapters_selection_action_functs=self._chapters_position_functions
             )
-        self._player_control_panel = PlayerControlPanel(root=self._player_control_place_panel)
+        self._player_control_panel = PlayerControlPanel(
+            root=self._player_control_place_panel
+            )
         # place the ChaptersPanel and PlayerControlPanel in the main window
         self._chapters_place_panel.place(relx=0, rely=0, relwidth=1, relheight=0.8)
         self._player_control_place_panel.place(
