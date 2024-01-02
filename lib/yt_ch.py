@@ -126,13 +126,16 @@ def get_chapters_json(yt_video: str):
         info_dict = ydl.extract_info(video_url, download=False)
     video_title = info_dict.get("title", None)
     video_chapters = info_dict.get("chapters", None)
-    chapters_timestamps = {}
+    chapters_from_entity = {}
+    chapters_from_desc = {}
     if video_chapters:
-        chapters_timestamps = get_chapters_from_chapters_entity(video_chapters)
+        chapters_from_entity = get_chapters_from_chapters_entity(video_chapters)
+    video_desc = info_dict.get("description", None)
+    chapters_from_desc = get_chapters_from_desc(video_desc)
+    if len(chapters_from_entity) >= len(chapters_from_desc):
+        chapters_timestamps = chapters_from_entity
     else:
-        video_desc = info_dict.get("description", None)
-        chapters_timestamps = get_chapters_from_desc(video_desc)
-
+        chapters_timestamps = chapters_from_desc
     chapters_metadata = {"title": video_title}
     chapters_metadata["chapters"] = chapters_timestamps
     chapters_json_doc = json.dumps(chapters_metadata, indent=4, separators=(",", ": "))
